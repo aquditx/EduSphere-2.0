@@ -5,7 +5,7 @@
         NL
       </div>
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-600">NovaLearn</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-600">EduSphere</p>
         <p className="text-sm text-slate-500">Learning OS</p>
       </div>
     </div>

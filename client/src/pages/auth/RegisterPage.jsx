@@ -13,7 +13,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [values, setValues] = useState({
     name: "Gloria Rodriguez",
-    email: "gloria+new@novalearn.app",
+    email: "gloria+new@EduSphere.app",
     password: "password123",
   });
   const signupMutation = useSignup();

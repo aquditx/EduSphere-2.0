@@ -16,7 +16,7 @@ function getHomeByRole(role) {
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [values, setValues] = useState({ email: "gloria@novalearn.app", password: "password123" });
+  const [values, setValues] = useState({ email: "gloria@EduSphere.app", password: "password123" });
   const loginMutation = useLogin();
 
   function handleChange(event) {
@@ -33,7 +33,7 @@ export default function LoginPage() {
   return (
     <AuthFormCard
       title="Welcome back"
-      description="Sign in to continue learning, manage courses, or review platform operations. Demo accounts: student `gloria@novalearn.app`, instructor `aisha@novalearn.app`, admin `admin@novalearn.app` with password `password123`."
+      description="Sign in to continue learning, manage courses, or review platform operations. Demo accounts: student `gloria@EduSphere.app`, instructor `aisha@EduSphere.app`, admin `admin@EduSphere.app` with password `password123`."
       fields={fields}
       values={values}
       onChange={handleChange}

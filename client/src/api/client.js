@@ -1,6 +1,6 @@
 ﻿import { seedCourses, seedEnrollments, seedProgress, seedReports, seedUsers } from "@/data/mockData.js";
 
-const STORAGE_KEY = "novalearn-lms-db";
+const STORAGE_KEY = "EduSphere-lms-db";
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));

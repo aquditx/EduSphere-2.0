@@ -4,7 +4,7 @@ import { persist } from "zustand/middleware";
 const guestUser = {
   id: null,
   name: "Guest Learner",
-  email: "guest@novalearn.app",
+  email: "guest@EduSphere.app",
   role: "guest",
   headline: "Explore the catalog before enrolling",
   avatar: "GL",
@@ -19,7 +19,7 @@ export const useAuthStore = create(
       logout: () => set({ token: null, user: guestUser }),
     }),
     {
-      name: "novalearn-auth",
+      name: "EduSphere-auth",
     }
   )
 );

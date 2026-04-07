@@ -2,7 +2,7 @@
   {
     id: "user-student-1",
     name: "Gloria Rodriguez",
-    email: "gloria@novalearn.app",
+    email: "gloria@EduSphere.app",
     password: "password123",
     role: "student",
     headline: "Product designer upskilling into AI product management",
@@ -11,7 +11,7 @@
   {
     id: "user-instructor-1",
     name: "Aisha Morgan",
-    email: "aisha@novalearn.app",
+    email: "aisha@EduSphere.app",
     password: "password123",
     role: "instructor",
     headline: "Head of Product Design at Halo",
@@ -20,7 +20,7 @@
   {
     id: "user-instructor-2",
     name: "Noah Bennett",
-    email: "noah@novalearn.app",
+    email: "noah@EduSphere.app",
     password: "password123",
     role: "instructor",
     headline: "Frontend Architect at Elevate",
@@ -29,7 +29,7 @@
   {
     id: "user-admin-1",
     name: "Jordan Lee",
-    email: "admin@novalearn.app",
+    email: "admin@EduSphere.app",
     password: "password123",
     role: "admin",
     headline: "Platform operations lead",

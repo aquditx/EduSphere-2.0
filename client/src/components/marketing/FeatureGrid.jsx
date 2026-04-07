@@ -28,7 +28,7 @@ export default function FeatureGrid() {
   return (
     <section id="features" className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
       <SectionHeader
-        eyebrow="Why NovaLearn"
+        eyebrow="Why EduSphere"
         title="Every screen is tuned for clarity, speed, and real learning momentum."
         description="A modular frontend foundation that feels premium from landing page to lesson player."
       />

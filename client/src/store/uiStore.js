@@ -33,7 +33,7 @@ export const useUiStore = create(
       setCourseTab: (courseTab) => set({ courseTab }),
     }),
     {
-      name: "novalearn-ui",
+      name: "EduSphere-ui",
     }
   )
 );

@@ -7,7 +7,7 @@ export default function AuthPanel() {
       <div className="relative flex h-full flex-col justify-between">
         <Logo />
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-200">NovaLearn LMS</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-200">EduSphere LMS</p>
           <h2 className="mt-6 text-4xl font-semibold leading-tight">
             Build a focused learning experience with premium UX and modular systems.
           </h2>
