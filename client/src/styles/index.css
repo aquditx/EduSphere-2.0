@@ -1,0 +1,42 @@
+﻿@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-slate-200;
+  }
+
+  body {
+    @apply bg-slate-50 font-sans text-slate-900 antialiased;
+  }
+
+  a {
+    @apply transition-colors;
+  }
+}
+
+@layer components {
+  .surface {
+    @apply rounded-3xl border border-white/60 bg-white/80 shadow-soft backdrop-blur;
+  }
+
+  .app-shell {
+    @apply min-h-screen bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,#f8fbff_0%,#eef4ff_100%)];
+  }
+
+  .heading-xl {
+    @apply text-4xl font-semibold tracking-tight text-slate-950 md:text-6xl;
+  }
+
+  .heading-lg {
+    @apply text-2xl font-semibold tracking-tight text-slate-950 md:text-4xl;
+  }
+
+  .text-muted {
+    @apply text-slate-500;
+  }
+}
+

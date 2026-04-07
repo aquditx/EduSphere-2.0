@@ -1,0 +1,134 @@
+﻿import { PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+import { Link, NavLink } from "react-router-dom";
+import Logo from "@/components/branding/Logo.jsx";
+import { useAuthStore } from "@/store/authStore.js";
+import { useUiStore } from "@/store/uiStore.js";
+import Button from "@/components/ui/Button.jsx";
+
+const studentLinks = [
+  { to: "/dashboard", label: "Dashboard" },
+  { to: "/courses", label: "Courses" },
+];
+
+const instructorLinks = [
+  { to: "/instructor", label: "Overview" },
+  { to: "/instructor/courses", label: "Courses" },
+  { to: "/instructor/create", label: "Create" },
+];
+
+const adminLinks = [
+  { to: "/admin", label: "Overview" },
+  { to: "/admin/users", label: "Users" },
+  { to: "/admin/courses", label: "Courses" },
+  { to: "/admin/reports", label: "Reports" },
+];
+
+function getLinks(role) {
+  if (role === "instructor") return instructorLinks;
+  if (role === "admin") return adminLinks;
+  return studentLinks;
+}
+
+export function Navbar({ title, subtitle, searchValue = "", onSearchChange }) {
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const sidebarOpen = useUiStore((state) => state.sidebarOpen);
+  const toggleSidebar = useUiStore((state) => state.toggleSidebar);
+
+  return (
+    <header className="border-b border-slate-200 bg-white/70 px-6 py-6 backdrop-blur">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">{title}</h1>
+          <p className="mt-2 text-sm text-slate-500">{subtitle}</p>
+        </div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <label className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4">
+            <Search className="h-4 w-4 text-slate-400" />
+            <input
+              className="w-56 bg-transparent text-sm outline-none disabled:cursor-not-allowed disabled:text-slate-400"
+              value={searchValue}
+              onChange={onSearchChange}
+              placeholder={onSearchChange ? "Search courses, lessons, mentors" : "Search available in catalog"}
+              aria-label="Global search"
+              disabled={!onSearchChange}
+            />
+          </label>
+          <button
+            className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600"
+            aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+            onClick={toggleSidebar}
+          >
+            {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+          </button>
+          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white">
+              {user.avatar || "GL"}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-950">{user.name}</p>
+              <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+            </div>
+          </div>
+          {user.role !== "guest" ? (
+            <Button variant="secondary" onClick={logout}>
+              Sign out
+            </Button>
+          ) : (
+            <Link to="/login" className="inline-flex items-center justify-center rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white">
+              Sign in
+            </Link>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+export function Sidebar() {
+  const user = useAuthStore((state) => state.user);
+  const sidebarOpen = useUiStore((state) => state.sidebarOpen);
+  const links = getLinks(user.role);
+
+  if (!sidebarOpen) {
+    return null;
+  }
+
+  return (
+    <aside className="hidden w-72 flex-col border-r border-slate-200 bg-white/80 px-6 py-8 backdrop-blur xl:flex">
+      <Logo />
+      <nav className="mt-10 space-y-2" aria-label="Primary">
+        {links.map((link) => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            className={({ isActive }) =>
+              `block rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                isActive ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+              }`
+            }
+          >
+            {link.label}
+          </NavLink>
+        ))}
+      </nav>
+      <div className="mt-auto rounded-[2rem] bg-slate-950 p-5 text-white">
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-200">Workspace</p>
+        <p className="mt-3 text-lg font-semibold">{user.headline}</p>
+        <p className="mt-2 text-sm text-slate-300">Keep learning systems, course operations, and discovery in one place.</p>
+      </div>
+    </aside>
+  );
+}
+
+export function PageShell({ title, subtitle, children, searchValue, onSearchChange, fullWidth = false }) {
+  return (
+    <div className="app-shell flex min-h-screen">
+      <Sidebar />
+      <main className="min-h-screen flex-1">
+        <Navbar title={title} subtitle={subtitle} searchValue={searchValue} onSearchChange={onSearchChange} />
+        <div className={fullWidth ? "p-6 lg:p-8" : "space-y-8 p-6 lg:p-8"}>{children}</div>
+      </main>
+    </div>
+  );
+}
