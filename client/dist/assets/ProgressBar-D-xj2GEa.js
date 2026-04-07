@@ -1,1 +1,0 @@
-import{j as s}from"./index-CTgfu3vD.js";function t({value:a}){return s.jsx("div",{className:"h-2 w-full rounded-full bg-slate-200",children:s.jsx("div",{className:"h-2 rounded-full bg-slate-950 transition-all",style:{width:`${Math.max(0,Math.min(100,a))}%`}})})}export{t as P};

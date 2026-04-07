@@ -1,12 +1,15 @@
-﻿import { Suspense, lazy } from "react";
+import { Suspense, lazy } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import AuthLayout from "@/layouts/AuthLayout.jsx";
 import Spinner from "@/components/ui/Spinner.jsx";
 import { useAuthStore } from "@/store/authStore.js";
 
 const LandingPage = lazy(() => import("@/pages/LandingPage.jsx"));
+const TeachPage = lazy(() => import("@/pages/marketing/TeachPage.jsx"));
+const MarketingInfoPage = lazy(() => import("@/pages/marketing/MarketingInfoPage.jsx"));
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage.jsx"));
 const SignupPage = lazy(() => import("@/pages/auth/RegisterPage.jsx"));
+const InstructorAppliedPage = lazy(() => import("@/pages/auth/InstructorAppliedPage.jsx"));
 const StudentDashboardPage = lazy(() => import("@/pages/student/StudentDashboardPage.jsx"));
 const CourseListPage = lazy(() => import("@/pages/student/CourseListPage.jsx"));
 const CourseDetailsPage = lazy(() => import("@/pages/student/CourseDetailsPage.jsx"));
@@ -15,6 +18,7 @@ const InstructorDashboardPage = lazy(() => import("@/pages/instructor/Instructor
 const InstructorCoursesPage = lazy(() => import("@/pages/instructor/InstructorCoursesPage.jsx"));
 const InstructorCreateCoursePage = lazy(() => import("@/pages/instructor/InstructorCreateCoursePage.jsx"));
 const InstructorEditCoursePage = lazy(() => import("@/pages/instructor/InstructorEditCoursePage.jsx"));
+const InstructorPublicProfilePage = lazy(() => import("@/pages/instructor/InstructorPublicProfilePage.jsx"));
 const AdminDashboardPage = lazy(() => import("@/pages/admin/AdminDashboardPage.jsx"));
 const AdminUsersPage = lazy(() => import("@/pages/admin/AdminUsersPage.jsx"));
 const AdminCoursesPage = lazy(() => import("@/pages/admin/AdminCoursesPage.jsx"));
@@ -62,17 +66,27 @@ export function AppRoutes() {
     <Suspense fallback={<LoadingRoute />}>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/courses" element={<CourseListPage />} />
+        <Route path="/teach" element={<TeachPage />} />
+        <Route path="/about" element={<MarketingInfoPage />} />
+        <Route path="/blog" element={<MarketingInfoPage />} />
+        <Route path="/careers" element={<MarketingInfoPage />} />
+        <Route path="/privacy" element={<MarketingInfoPage />} />
+        <Route path="/terms" element={<MarketingInfoPage />} />
+        <Route path="/instructor/:instructorId/profile" element={<InstructorPublicProfilePage />} />
+        <Route path="/instructor-applied" element={<InstructorAppliedPage />} />
 
         <Route element={<GuestRoute />}>
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/register" element={<SignupPage />} />
+            <Route path="/signup" element={<Navigate to="/register" replace />} />
           </Route>
         </Route>
 
         <Route element={<ProtectedRoute roles={["student"]} />}>
           <Route path="/dashboard" element={<StudentDashboardPage />} />
-          <Route path="/courses" element={<CourseListPage />} />
+          <Route path="/student/dashboard" element={<Navigate to="/dashboard" replace />} />
           <Route path="/courses/:id" element={<CourseDetailsPage />} />
           <Route path="/learn/:courseId/:lessonId" element={<CoursePlayerPage />} />
         </Route>
@@ -92,7 +106,7 @@ export function AppRoutes() {
         </Route>
 
         <Route path="/auth/login" element={<Navigate to="/login" replace />} />
-        <Route path="/auth/register" element={<Navigate to="/signup" replace />} />
+        <Route path="/auth/register" element={<Navigate to="/register" replace />} />
         <Route path="/student" element={<Navigate to="/dashboard" replace />} />
         <Route path="/student/courses" element={<Navigate to="/courses" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />

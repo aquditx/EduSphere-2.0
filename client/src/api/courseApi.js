@@ -24,6 +24,18 @@ export function updateCourse(courseId, payload) {
   return apiClient.patch(`/courses/${courseId}`, payload);
 }
 
+export function duplicateCourse(courseId) {
+  return apiClient.post(`/courses/${courseId}/duplicate`);
+}
+
+export function publishCourse(courseId) {
+  return apiClient.post(`/courses/${courseId}/publish`);
+}
+
+export function archiveCourse(courseId) {
+  return apiClient.post(`/courses/${courseId}/archive`);
+}
+
 export function deleteCourse(courseId) {
   return apiClient.delete(`/courses/${courseId}`);
 }

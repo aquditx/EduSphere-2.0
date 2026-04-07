@@ -1,10 +1,10 @@
-﻿import { useNavigate } from "react-router-dom";
+﻿import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CourseEditorForm from "@/components/cms/CourseEditorForm.jsx";
 import { PageShell } from "@/components/layout/PageShell.jsx";
 import { useCreateCourse } from "@/hooks/useCourses.js";
 import { useAuthStore } from "@/store/authStore.js";
 import { slugify } from "@/utils/index.js";
-import { useState } from "react";
 
 function createLesson() {
   return {
@@ -12,9 +12,11 @@ function createLesson() {
     title: "New lesson",
     durationSeconds: 600,
     preview: false,
+    published: true,
     description: "Lesson description",
     videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
     transcriptUrl: "data:text/vtt;charset=utf-8,WEBVTT%0A%0A00%3A00%3A00.000%20--%3E%2000%3A00%3A04.000%0ANew%20lesson%20captions",
+    type: "Video",
   };
 }
 
@@ -22,6 +24,7 @@ function createModule() {
   return {
     id: `module-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
     title: "New module",
+    description: "Module summary",
     lessons: [createLesson()],
   };
 }
@@ -33,11 +36,24 @@ function initialValues(user) {
     description: "",
     category: "Design",
     level: "Beginner",
+    language: "English",
+    tags: [],
     durationMinutes: 120,
     price: 49,
+    free: false,
+    discountPrice: 0,
+    discountExpiry: "",
     status: "draft",
     thumbnail: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80",
     accent: "from-slate-700 via-slate-900 to-slate-950",
+    promoVideoUrl: "",
+    urlSlug: "",
+    metaDescription: "",
+    certificateEnabled: false,
+    discussionEnabled: false,
+    dripEnabled: false,
+    enrollmentLimitEnabled: false,
+    enrollmentLimit: 0,
     outcomes: ["Outcome one", "Outcome two"],
     modules: [createModule()],
     instructorId: user.id,
@@ -50,7 +66,14 @@ export default function InstructorCreateCoursePage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const createCourseMutation = useCreateCourse();
+  const [activeStep, setActiveStep] = useState(1);
   const [values, setValues] = useState(() => initialValues(user));
+
+  useEffect(() => {
+    if (values.title && !values.urlSlug) {
+      setValues((current) => ({ ...current, urlSlug: slugify(current.title) }));
+    }
+  }, [values.title]);
 
   function handleChange(field, value) {
     setValues((current) => ({ ...current, [field]: value }));
@@ -107,19 +130,34 @@ export default function InstructorCreateCoursePage() {
     }));
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-    const payload = { ...values, slug: slugify(values.title) };
+  async function createCourse(payload) {
     const course = await createCourseMutation.mutateAsync(payload);
     navigate(`/instructor/course/${course.id}/edit`);
+  }
+
+  function handleSaveDraft() {
+    createCourse({ ...values, slug: slugify(values.title), status: "draft" });
+  }
+
+  function handlePublish() {
+    createCourse({ ...values, slug: slugify(values.title), status: "approved" });
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    createCourse({ ...values, slug: slugify(values.title), status: values.status || "draft" });
   }
 
   return (
     <PageShell title="Create course" subtitle="Build a production-ready course with modules, lessons, captions, and preview rules.">
       <CourseEditorForm
+        activeStep={activeStep}
+        onStepChange={setActiveStep}
         values={values}
         onChange={handleChange}
         onSubmit={handleSubmit}
+        onSaveDraft={handleSaveDraft}
+        onPublish={handlePublish}
         onAddModule={handleAddModule}
         onDeleteModule={handleDeleteModule}
         onAddLesson={handleAddLesson}
@@ -127,6 +165,7 @@ export default function InstructorCreateCoursePage() {
         onModuleChange={handleModuleChange}
         onDeleteLesson={handleDeleteLesson}
         isPending={createCourseMutation.isPending}
+        saving={createCourseMutation.isPending}
         submitLabel="Create course"
       />
     </PageShell>

@@ -1,0 +1,1 @@
+import{j as t}from"./index-vz5tMNGG.js";function x({title:s,message:l,action:e}){return t.jsxs("div",{className:"surface p-8 text-center",children:[t.jsx("h2",{className:"text-xl font-semibold text-slate-950",children:s}),t.jsx("p",{className:"mt-3 text-sm text-slate-500",children:l}),e?t.jsx("div",{className:"mt-5",children:e}):null]})}export{x as E};

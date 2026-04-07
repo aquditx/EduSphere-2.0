@@ -11,11 +11,17 @@
   {
     id: "user-instructor-1",
     name: "Aisha Morgan",
-    email: "aisha@EduSphere.app",
-    password: "password123",
+    email: "instructor@edusphere.com",
+    password: "instructor123",
     role: "instructor",
     headline: "Head of Product Design at Halo",
     avatar: "AM",
+    bio: "<p>Aisha helps product teams turn messy discovery into crisp systems, clearer critiques, and portfolio-ready outcomes.</p><p>She has led design organizations across SaaS, marketplaces, and education products, and teaches practical workflows teams can apply immediately.</p>",
+    topics: ["Product Design", "Design Systems", "Research", "Prototyping"],
+    website: "https://edusphere.app/instructors/aisha",
+    twitter: "https://twitter.com/aishamorgan",
+    linkedin: "https://linkedin.com/in/aishamorgan",
+    youtube: "https://youtube.com/@aishamorgan",
   },
   {
     id: "user-instructor-2",
@@ -25,6 +31,12 @@
     role: "instructor",
     headline: "Frontend Architect at Elevate",
     avatar: "NB",
+    bio: "<p>Noah teaches engineers how to profile, debug, and scale modern frontend systems without sacrificing product velocity.</p><p>His courses focus on practical performance wins, maintainable architecture, and production-grade observability.</p>",
+    topics: ["React", "Frontend Architecture", "Performance", "JavaScript"],
+    website: "https://edusphere.app/instructors/noah",
+    twitter: "https://twitter.com/noahbennett",
+    linkedin: "https://linkedin.com/in/noahbennett",
+    youtube: "https://youtube.com/@noahbennett",
   },
   {
     id: "user-admin-1",
@@ -34,6 +46,21 @@
     role: "admin",
     headline: "Platform operations lead",
     avatar: "JL",
+  },
+  {
+    id: "user-instructor-3",
+    name: "Mina Patel",
+    email: "mina@EduSphere.app",
+    password: "password123",
+    role: "instructor",
+    headline: "Data science educator and analytics consultant",
+    avatar: "MP",
+    bio: "<p>Mina helps analysts and operators build confidence with real-world data workflows, dashboards, and experimentation.</p><p>She focuses on making technical concepts approachable without losing rigor.</p>",
+    topics: ["Data Science", "Analytics", "Experimentation"],
+    website: "https://edusphere.app/instructors/mina",
+    twitter: "https://twitter.com/minapatel",
+    linkedin: "https://linkedin.com/in/minapatel",
+    youtube: "https://youtube.com/@minapatel",
   },
 ];
 
@@ -416,4 +443,3 @@ export const seedReports = {
   completionRate: 81,
   publishedCourses: 12,
 };
-
