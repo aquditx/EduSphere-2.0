@@ -8,7 +8,7 @@ export default function PricingSection() {
         <SectionHeader
           eyebrow="Simple pricing"
           title="Choose a plan that scales from solo instructors to learning teams."
-          description="Tailwind-powered SaaS styling with predictable spacing, sharp hierarchy, and high-conversion calls to action."
+          description="Flexible plans designed to empower every learner. From solo students to large institutions, get access to world-class courses and real-time progress tracking."
         />
 
         <div className="mt-10 grid gap-6 lg:grid-cols-3">

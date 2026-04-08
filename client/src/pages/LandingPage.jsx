@@ -5,6 +5,7 @@ import HeroSection from "@/components/marketing/HeroSection.jsx";
 import MarketingFooter from "@/components/marketing/MarketingFooter.jsx";
 import MarketingHeader from "@/components/marketing/MarketingHeader.jsx";
 import PricingSection from "@/components/marketing/PricingSection.jsx";
+import InstructorsSection from "../components/marketing/InstructorsSections";
 
 export default function LandingPage() {
   return (
@@ -14,6 +15,7 @@ export default function LandingPage() {
       <FeatureGrid />
       <TeachStrip />
       <CourseShowcase />
+      <InstructorsSection/>
       <PricingSection />
       <MarketingFooter />
     </div>

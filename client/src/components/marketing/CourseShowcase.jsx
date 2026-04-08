@@ -10,7 +10,7 @@ export default function CourseShowcase() {
       <SectionHeader
         eyebrow="Popular catalog"
         title="Launch a premium learning storefront with reusable cards and detail views."
-        description="Each course entry is production-ready for catalog browsing, conversion, and in-product continuation."
+        description="From Microservices architecture to Advanced Frontend development, our courses are designed by industry veterans to take you from fundamentals to production-ready engineering."
         action={
           <Link to="/courses" className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
             See all courses

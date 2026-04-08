@@ -18,6 +18,10 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 @layer components {
   .surface {
     @apply rounded-3xl border border-white/60 bg-white/80 shadow-soft backdrop-blur;
@@ -40,3 +44,12 @@
   }
 }
 
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex; /* Ensures items stay in a row */
+  animation: marquee 40s linear infinite;
+}
