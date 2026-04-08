@@ -11,13 +11,30 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_25%),linear-gradient(180deg,#ffffff_0%,#eef4ff_100%)]">
       <MarketingHeader />
-      <HeroSection />
-      <FeatureGrid />
-      <TeachStrip />
-      <CourseShowcase />
-      <InstructorsSection/>
-      <PricingSection />
-      <MarketingFooter />
+      
+      <main className="pt-16">
+        <HeroSection />
+        
+        <div id="features">
+          <FeatureGrid />
+        </div>
+        
+        <TeachStrip />
+        
+        <div id="catalog">
+          <CourseShowcase />
+        </div>
+        
+        <div id="instructors">
+          <InstructorsSection />
+        </div>
+        
+        <div id="pricing">
+          <PricingSection />
+        </div>
+        
+        <MarketingFooter />
+      </main>
     </div>
   );
 }
