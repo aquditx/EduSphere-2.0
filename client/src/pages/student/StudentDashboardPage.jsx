@@ -77,6 +77,19 @@ export default function StudentDashboardPage() {
         ))}
       </section>
 
+      <section className="surface mt-8 p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.16em] text-slate-400">AI quizzes</p>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-950">Take a lesson quiz from one of your courses</h2>
+            <p className="mt-3 text-sm text-slate-600">Pick a video lesson and test your knowledge using the new quiz library.</p>
+          </div>
+          <Link to="/student/assessments" className="inline-flex items-center justify-center rounded-2xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white">
+            Open quiz library
+          </Link>
+        </div>
+      </section>
+
       <section className="grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-4">
           <div>

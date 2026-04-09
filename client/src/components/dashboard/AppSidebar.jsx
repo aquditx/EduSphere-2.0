@@ -12,7 +12,6 @@ const links = [
 export default function AppSidebar() {
   return (
     <aside className="hidden w-72 flex-col border-r border-slate-200 bg-white/80 px-6 py-8 backdrop-blur xl:flex">
-      {/* Added the Home Link to the Logo here too! */}
       <Link to="/" className="mb-10 transition hover:opacity-80">
         <Logo />
       </Link>
@@ -32,8 +31,8 @@ export default function AppSidebar() {
           >
             <Icon className="h-4 w-4" />
             {label}
-            {/* Added a "New" badge for the AI feature to make it pop */}
-            {label === "AI Quizzes" && (
+
+            {label === "AI Quizzes" && user.role === "student" && (
               <span className="ml-auto flex items-center gap-1 rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-bold text-brand-700 uppercase">
                 <Sparkles className="h-2 w-2" />
                 AI

@@ -1,33 +1,93 @@
 ﻿import { apiClient } from "./client.js";
 
+const BASE_URL = "http://localhost:8000/api";
+
+// KEEP MOCK for now fix this later
 export function getEnrollments(userId) {
   return apiClient.get("/enrollments", { params: { userId } });
 }
 
-export function getProgress(userId, courseId) {
-  return apiClient.get("/progress", { params: { userId, courseId } });
+// Getting progress
+export async function getProgress(userId, courseId) {
+  const res = await fetch(
+    `${BASE_URL}/progress?userId=${userId}&courseId=${courseId}`
+  );
+  return res.json();
 }
 
-export function updateProgress(courseId, lessonId, userId, nextLessonId, timeWatched) {
-  return apiClient.post("/progress/complete", {
-    courseId,
-    lessonId,
-    userId,
-    nextLessonId,
-    timeWatched,
+// post progress data
+export async function updateProgress(
+  courseId,
+  lessonId,
+  userId,
+  nextLessonId,
+  timeWatched
+) {
+  const res = await fetch(`${BASE_URL}/progress/complete`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      courseId,
+      lessonId,
+      userId,
+      nextLessonId,
+      timeWatched,
+    }),
   });
+
+  return res.json();
 }
 
-export function saveWatchTime(courseId, lessonId, userId, timeWatched) {
-  return apiClient.post("/progress/watch", {
-    courseId,
-    lessonId,
-    userId,
-    timeWatched,
+// 
+export async function saveWatchTime(
+  courseId,
+  lessonId,
+  userId,
+  timeWatched
+) {
+  const res = await fetch(`${BASE_URL}/progress/watch`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      courseId,
+      lessonId,
+      userId,
+      timeWatched,
+    }),
   });
+
+  return res.json();
 }
 
-export function submitQuiz(payload) {
-  return apiClient.post("/progress/quiz", payload);
+//  Posting quiz results 
+export async function submitQuiz(payload) {
+  const res = await fetch(`${BASE_URL}/progress/quiz`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return res.json();
 }
 
+// quiz set this up after course microservice 
+export async function generateAiQuiz(lessonTitle, lessonContent) {
+  const res = await fetch(`${BASE_URL}/progress/generate-quiz`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      lessonTitle,
+      lessonContent,
+    }),
+  });
+
+  return res.json();
+}

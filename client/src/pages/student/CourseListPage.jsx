@@ -8,13 +8,12 @@ import Input from "@/components/ui/Input.jsx";
 import Modal from "@/components/ui/Modal.jsx";
 import Select from "@/components/ui/Select.jsx";
 import Spinner from "@/components/ui/Spinner.jsx";
-import MarketingFooter from "@/components/marketing/MarketingFooter.jsx";
-import MarketingHeader from "@/components/marketing/MarketingHeader.jsx";
 import { seedCourses } from "@/data/mockData.js";
 import { useCourses, usePrefetchCourse } from "@/hooks/useCourses.js";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue.js";
 import { useAuthStore } from "@/store/authStore.js";
 import { cn } from "@/utils/index.js";
+import { PageShell } from "@/components/layout/PageShell.jsx";
 
 const categoryOptions = Array.from(new Set(seedCourses.map((course) => course.category)));
 const levelOptions = ["Beginner", "Intermediate", "Advanced", "All levels"];
@@ -120,93 +119,94 @@ export default function CourseListPage() {
   const pagination = coursesQuery.data?.pagination;
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_25%),linear-gradient(180deg,#ffffff_0%,#eef4ff_100%)]">
-      <MarketingHeader />
+    <PageShell 
+      title="Course Catalog" 
+      subtitle="Explore specialized courses and boost your skills."
+      searchValue={filters.search}
+      onSearchChange={(e) => setSearch(e.target.value)}
+    >
+      {/* Mobile Filter Button - only shows on small screens */}
+      <div className="mb-6 lg:hidden">
+        <button
+          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
+          onClick={() => setMobileFiltersOpen(true)}
+        >
+          <Filter className="h-4 w-4" />
+          Filters
+        </button>
+      </div>
 
-      <main className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="w-full lg:max-w-2xl">
-            <Input
-              label="Search courses"
-              placeholder="Search courses, skills, or instructors"
-              value={filters.search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </div>
-          <button
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 lg:hidden"
-            onClick={() => setMobileFiltersOpen(true)}
-          >
-            <Filter className="h-4 w-4" />
-            Filters
-          </button>
-        </div>
+      <div className="grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
+        {/* Left Side: Filter Sidebar (Desktop) */}
+        <aside className="hidden lg:block">
+          <FilterSidebar 
+            filters={filters} 
+            onToggleMultiValue={toggleMultiValue} 
+            onSetSingleValue={setSingleValue} 
+            onClear={clearFilters} 
+          />
+        </aside>
 
-        <div className="grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
-          <aside className="hidden lg:block">
-            <FilterSidebar filters={filters} onToggleMultiValue={toggleMultiValue} onSetSingleValue={setSingleValue} onClear={clearFilters} />
-          </aside>
-
-          <div className="space-y-6">
-            <div className="surface p-5">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <p className="text-sm text-slate-500">
-                  {coursesQuery.isLoading ? "Loading results..." : `${(pagination?.totalItems || 0).toLocaleString()} results`}
-                </p>
-                <div className="w-full md:w-72">
-                  <Select value={filters.sort} onChange={(event) => setSingleValue("sort", event.target.value)}>
-                    <option value="relevance">Relevance</option>
-                    <option value="newest">Newest</option>
-                    <option value="highest-rated">Highest rated</option>
-                    <option value="most-popular">Most popular</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                  </Select>
-                </div>
+        {/* Right Side: Results Area */}
+        <div className="space-y-6">
+          <div className="surface p-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <p className="text-sm text-slate-500">
+                {coursesQuery.isLoading ? "Loading results..." : `${(pagination?.totalItems || 0).toLocaleString()} results`}
+              </p>
+              <div className="w-full md:w-72">
+                <Select value={filters.sort} onChange={(event) => setSingleValue("sort", event.target.value)}>
+                  <option value="relevance">Relevance</option>
+                  <option value="newest">Newest</option>
+                  <option value="highest-rated">Highest rated</option>
+                  <option value="most-popular">Most popular</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                </Select>
               </div>
             </div>
-
-            {coursesQuery.isLoading ? <Spinner label="Loading courses" /> : null}
-            {coursesQuery.isError ? <ErrorState message={coursesQuery.error.message} onAction={() => coursesQuery.refetch()} /> : null}
-            {!coursesQuery.isLoading && !coursesQuery.isError && courses.length === 0 ? (
-              <EmptyState
-                title="No courses found"
-                message="Try adjusting your filters."
-                action={
-                  <button className="font-semibold text-brand-600" onClick={clearFilters}>
-                    Clear all filters
-                  </button>
-                }
-              />
-            ) : null}
-
-            {!coursesQuery.isLoading && !coursesQuery.isError && courses.length > 0 ? (
-              <>
-                <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                  {courses.map((course) => {
-                    const isStudent = user.role === "student";
-                    return (
-                      <CourseCard
-                        key={course.id}
-                        course={course}
-                        onHover={prefetchCourse}
-                        instructorHref={`/instructor/${course.instructorId}/profile`}
-                        actionLabel={isStudent ? "Go to course" : "Enroll"}
-                        actionHref={isStudent ? `/courses/${course.id}` : "/login?role=student"}
-                        actionVariant={isStudent ? "secondary" : "primary"}
-                      />
-                    );
-                  })}
-                </section>
-                <Pagination currentPage={pagination.page} totalPages={pagination.totalPages} onPageChange={(page) => setSingleValue("page", String(page))} />
-              </>
-            ) : null}
           </div>
+
+          {/* Error & Loading States */}
+          {coursesQuery.isLoading && <Spinner label="Loading courses" />}
+          {coursesQuery.isError && <ErrorState message={coursesQuery.error.message} onAction={() => coursesQuery.refetch()} />}
+
+          {/* The Course Grid */}
+          {!coursesQuery.isLoading && !coursesQuery.isError && courses.length > 0 ? (
+            <>
+              <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {courses.map((course) => (
+                  <CourseCard
+                    key={course.id}
+                    course={course}
+                    onHover={prefetchCourse}
+                    instructorHref={`/instructor/${course.instructorId}/profile`}
+                    actionLabel={user.role === "student" ? "Go to course" : "Enroll"}
+                    actionHref={user.role === "student" ? `/courses/${course.id}` : "/login?role=student"}
+                    actionVariant={user.role === "student" ? "secondary" : "primary"}
+                  />
+                ))}
+              </section>
+              
+              <div className="mt-10">
+                <Pagination 
+                  currentPage={pagination?.page || 1} 
+                  totalPages={pagination?.totalPages || 1} 
+                  onPageChange={(page) => setSingleValue("page", String(page))} 
+                />
+              </div>
+            </>
+          ) : !coursesQuery.isLoading && (
+            <EmptyState
+              title="No courses found"
+              message="Try adjusting your filters."
+              action={<button className="font-semibold text-brand-600" onClick={clearFilters}>Clear all filters</button>}
+            />
+          )}
         </div>
-      </main>
+      </div>
 
-      <MarketingFooter />
-
+      {/* Mobile Filter Modal */}
       <Modal open={mobileFiltersOpen} title="Filters" onClose={() => setMobileFiltersOpen(false)}>
         <FilterSidebar
           filters={filters}
@@ -215,9 +215,10 @@ export default function CourseListPage() {
           onClear={clearFilters}
         />
       </Modal>
-    </div>
+    </PageShell>
   );
 }
+
 
 function FilterSidebar({ filters, onToggleMultiValue, onSetSingleValue, onClear }) {
   return (

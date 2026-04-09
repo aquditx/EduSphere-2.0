@@ -15,6 +15,7 @@ import { useCourse, useEnroll, useSubmitReview } from "@/hooks/useCourses.js";
 import { useEnrollments } from "@/hooks/useProgress.js";
 import { useUiStore } from "@/store/uiStore.js";
 
+
 const tabItems = [
   { label: "Overview", value: "overview" },
   { label: "Curriculum", value: "curriculum" },

@@ -2,14 +2,13 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import CourseSidebar from "@/components/course/CourseSidebar.jsx";
 import { PageShell } from "@/components/layout/PageShell.jsx";
-import LessonQuiz from "@/components/player/LessonQuiz.jsx";
 import ProgressBar from "@/components/player/ProgressBar.jsx";
 import VideoPlayer from "@/components/player/VideoPlayer.jsx";
 import Button from "@/components/ui/Button.jsx";
 import ErrorState from "@/components/ui/ErrorState.jsx";
 import Spinner from "@/components/ui/Spinner.jsx";
 import { useCourse } from "@/hooks/useCourses.js";
-import { useCourseProgress, useEnrollments, useMarkLessonComplete, useSaveWatchTime, useSubmitQuiz } from "@/hooks/useProgress.js";
+import { useCourseProgress, useEnrollments, useMarkLessonComplete, useSaveWatchTime } from "@/hooks/useProgress.js";
 import { usePlayerStore } from "@/store/playerStore.js";
 
 export default function CoursePlayerPage() {
@@ -20,7 +19,6 @@ export default function CoursePlayerPage() {
   const progressQuery = useCourseProgress(courseId);
   const markCompleteMutation = useMarkLessonComplete(courseId);
   const watchTimeMutation = useSaveWatchTime(courseId);
-  const quizMutation = useSubmitQuiz(courseId);
   const playbackRate = usePlayerStore((state) => state.playbackRate);
   const captionsEnabled = usePlayerStore((state) => state.captionsEnabled);
   const setPlaybackRate = usePlayerStore((state) => state.setPlaybackRate);
@@ -49,7 +47,7 @@ export default function CoursePlayerPage() {
   const lesson = useMemo(() => course?.lessons.find((item) => item.id === lessonId) || course?.lessons[0], [course, lessonId]);
   const lessonIndex = course?.lessons.findIndex((item) => item.id === lesson?.id) ?? -1;
   const nextLesson = lessonIndex >= 0 ? course?.lessons[lessonIndex + 1] : null;
-  const progressPercent = course && progress ? Math.round((progress.completedLessonIds.length / course.totalLessons) * 100) : 0;
+  const progressPercent = course && progress ? Math.round((progress?.completedLessonIds?.length ||0 / course.totalLessons) * 100) : 0;
 
   async function handleMarkComplete() {
     if (!lesson || !isEnrolled) {
@@ -59,10 +57,6 @@ export default function CoursePlayerPage() {
     if (nextLesson) {
       navigate(`/learn/${course.id}/${nextLesson.id}`);
     }
-  }
-
-  async function handleQuizSubmit({ answers, score }) {
-    await quizMutation.mutateAsync({ lessonId: lesson.id, answers, score });
   }
 
   if (courseQuery.isLoading || enrollmentsQuery.isLoading || progressQuery.isLoading) {
@@ -124,7 +118,6 @@ export default function CoursePlayerPage() {
               <Link to={`/courses/${course.id}`} className="font-semibold text-slate-700">Back to course</Link>
             </div>
           </section>
-          <LessonQuiz lesson={lesson} previousResult={progress?.quizResults?.[lesson.id]} onSubmit={handleQuizSubmit} isPending={quizMutation.isPending} />
         </div>
         <CourseSidebar course={course} activeLessonId={lesson.id} progress={progress} isEnrolled={isEnrolled} />
       </div>

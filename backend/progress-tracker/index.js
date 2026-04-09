@@ -24,7 +24,12 @@ async function startServer() {
     progressRoutes.setCollection(progressCollection);
 
     app.get('/', (req, res) => {
-      res.send('Progress Tracker Microservice is running!');
+      res.send({ 
+  status: "ok", 
+  completedLessons: [], 
+  lessonTimes: {}, 
+  lastLessonId: null 
+});
     });
 
     // Mount the router

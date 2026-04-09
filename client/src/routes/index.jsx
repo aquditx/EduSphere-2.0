@@ -11,6 +11,8 @@ const LoginPage = lazy(() => import("@/pages/auth/LoginPage.jsx"));
 const SignupPage = lazy(() => import("@/pages/auth/RegisterPage.jsx"));
 const InstructorAppliedPage = lazy(() => import("@/pages/auth/InstructorAppliedPage.jsx"));
 const StudentDashboardPage = lazy(() => import("@/pages/student/StudentDashboardPage.jsx"));
+const StudentAssessmentsPage = lazy(() => import("@/pages/student/StudentAssessmentsPage.jsx"));
+const StudentAssessmentLessonPage = lazy(() => import("@/pages/student/StudentAssessmentLessonPage.jsx"));
 const CourseListPage = lazy(() => import("@/pages/student/CourseListPage.jsx"));
 const CourseDetailsPage = lazy(() => import("@/pages/student/CourseDetailsPage.jsx"));
 const CoursePlayerPage = lazy(() => import("@/pages/student/CoursePlayerPage.jsx"));
@@ -87,6 +89,8 @@ export function AppRoutes() {
         <Route element={<ProtectedRoute roles={["student"]} />}>
           <Route path="/dashboard" element={<StudentDashboardPage />} />
           <Route path="/student/dashboard" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/student/assessments" element={<StudentAssessmentsPage />} />
+          <Route path="/student/assessments/:courseId/:lessonId" element={<StudentAssessmentLessonPage />} />
           <Route path="/courses/:id" element={<CourseDetailsPage />} />
           <Route path="/learn/:courseId/:lessonId" element={<CoursePlayerPage />} />
         </Route>

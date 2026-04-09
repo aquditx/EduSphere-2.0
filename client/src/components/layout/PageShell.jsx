@@ -38,10 +38,23 @@ export function Navbar({ title, subtitle, searchValue = "", onSearchChange }) {
   return (
     <header className="border-b border-slate-200 bg-white/70 px-6 py-6 backdrop-blur">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">{title}</h1>
-          <p className="mt-2 text-sm text-slate-500">{subtitle}</p>
+        
+        {/* Container to keep button besides the title */}
+        <div className="flex items-start gap-4">
+          <button
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50"
+            aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+            onClick={toggleSidebar}
+          >
+            {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+          </button>
+
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">{title}</h1>
+            <p className="mt-2 text-sm text-slate-500">{subtitle}</p>
+          </div>
         </div>
+
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <label className="flex h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4">
             <Search className="h-4 w-4 text-slate-400" />
@@ -54,13 +67,7 @@ export function Navbar({ title, subtitle, searchValue = "", onSearchChange }) {
               disabled={!onSearchChange}
             />
           </label>
-          <button
-            className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600"
-            aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-            onClick={toggleSidebar}
-          >
-            {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
-          </button>
+          
           <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white">
               {user.avatar || "GL"}
@@ -127,7 +134,8 @@ export function PageShell({ title, subtitle, children, searchValue, onSearchChan
       <Sidebar />
       <main className="min-h-screen flex-1">
         <Navbar title={title} subtitle={subtitle} searchValue={searchValue} onSearchChange={onSearchChange} />
-        <div className={fullWidth ? "p-6 lg:p-8" : "space-y-8 p-6 lg:p-8"}>{children}</div>
+        {/* mx-auto and max-w-7xl added here to reduce dashboard width */}
+        <div className={fullWidth ? "p-6 lg:p-8" : "mx-auto max-w-7xl space-y-8 p-6 lg:p-8"}>{children}</div>
       </main>
     </div>
   );
