@@ -1,10 +1,11 @@
-import { Filter } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Filter, Search as SearchIcon, Sparkles, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import CourseCard from "@/components/course/CourseCard.jsx";
+import MarketingFooter from "@/components/marketing/MarketingFooter.jsx";
+import MarketingHeader from "@/components/marketing/MarketingHeader.jsx";
 import EmptyState from "@/components/ui/EmptyState.jsx";
 import ErrorState from "@/components/ui/ErrorState.jsx";
-import Input from "@/components/ui/Input.jsx";
 import Modal from "@/components/ui/Modal.jsx";
 import Select from "@/components/ui/Select.jsx";
 import Spinner from "@/components/ui/Spinner.jsx";
@@ -13,37 +14,45 @@ import { useCourses, usePrefetchCourse } from "@/hooks/useCourses.js";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue.js";
 import { useEnrollments } from "@/hooks/useProgress.js";
 import { cn } from "@/utils/index.js";
-import { PageShell } from "@/components/layout/PageShell.jsx";
 
-const categoryOptions = Array.from(new Set(seedCourses.map((course) => course.category)));
-const levelOptions = ["Beginner", "Intermediate", "Advanced", "All levels"];
+const PAGE_SIZE = 12;
+const MAX_SCROLL_PAGES = 2; // auto-append up to 2 extra pages via infinite scroll
+
+const categoryOptions = Array.from(new Set(seedCourses.map((course) => course.category))).sort();
+const languageOptions = Array.from(new Set(seedCourses.map((course) => course.language || "English"))).sort();
+const levelOptions = ["Beginner", "Intermediate", "Advanced"];
 const ratingOptions = [
-  { label: "4.5+", value: "4.5" },
-  { label: "4.0+", value: "4" },
-  { label: "3.5+", value: "3.5" },
-  { label: "Any", value: "" },
+  { label: "4.5 & up", value: "4.5" },
+  { label: "4.0 & up", value: "4" },
+  { label: "3.5 & up", value: "3.5" },
+  { label: "Any rating", value: "" },
 ];
 const priceOptions = [
   { label: "Free", value: "free" },
   { label: "Paid", value: "paid" },
-  { label: "Any", value: "any" },
+  { label: "Any price", value: "any" },
 ];
 const durationOptions = [
-  { label: "Under 2h", value: "under-2" },
-  { label: "2-10h", value: "2-10" },
-  { label: "10h+", value: "10-plus" },
+  { label: "Under 2 hours", value: "under-2" },
+  { label: "2 – 10 hours", value: "2-10" },
+  { label: "10+ hours", value: "10-plus" },
+  { label: "Any length", value: "" },
 ];
 
 export default function CourseListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [scrollPages, setScrollPages] = useState(0);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const prefetchCourse = usePrefetchCourse();
   const enrollmentsQuery = useEnrollments();
+  const sentinelRef = useRef(null);
 
   const filters = {
     search: searchParams.get("search") || "",
     category: searchParams.getAll("category"),
     level: searchParams.getAll("level"),
+    language: searchParams.getAll("language"),
     rating: searchParams.get("rating") || "",
     price: searchParams.get("price") || "any",
     duration: searchParams.get("duration") || "",
@@ -53,11 +62,30 @@ export default function CourseListPage() {
   };
   const debouncedSearch = useDebouncedValue(filters.search, 300);
 
+  // Reset infinite-scroll accumulator whenever any filter (except scroll itself) changes.
+  const filterSignature = JSON.stringify({
+    search: debouncedSearch,
+    category: filters.category,
+    level: filters.level,
+    language: filters.language,
+    rating: filters.rating,
+    price: filters.price,
+    duration: filters.duration,
+    sort: filters.sort,
+    page: filters.page,
+  });
+  useEffect(() => {
+    setScrollPages(0);
+  }, [filterSignature]);
+
+  const effectivePageSize = PAGE_SIZE * (1 + scrollPages);
+
   const queryFilters = useMemo(
     () => ({
       search: debouncedSearch,
       category: filters.category,
-      level: filters.level.includes("All levels") ? [] : filters.level,
+      level: filters.level,
+      language: filters.language,
       rating: filters.rating,
       price: filters.price,
       duration: filters.duration,
@@ -65,16 +93,38 @@ export default function CourseListPage() {
       instructorId: filters.instructorId,
       status: "approved",
       page: filters.page,
-      pageSize: 20,
+      pageSize: effectivePageSize,
     }),
-    [debouncedSearch, filters.category, filters.duration, filters.instructorId, filters.level, filters.page, filters.price, filters.rating, filters.sort]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [debouncedSearch, filterSignature, effectivePageSize]
   );
   const coursesQuery = useCourses(queryFilters);
+
+  const courses = coursesQuery.data?.items || [];
+  const pagination = coursesQuery.data?.pagination;
+  const totalItems = pagination?.totalItems || 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const hasMoreInScroll = scrollPages < MAX_SCROLL_PAGES && courses.length < totalItems && pagination?.hasMore;
+
+  // IntersectionObserver — auto-load next scroll page while below the auto-load cap.
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasMoreInScroll && !coursesQuery.isFetching) {
+          setScrollPages((value) => Math.min(value + 1, MAX_SCROLL_PAGES));
+        }
+      },
+      { rootMargin: "300px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMoreInScroll, coursesQuery.isFetching]);
 
   function updateParams(updater) {
     const next = new URLSearchParams(searchParams);
     updater(next);
-    if (!next.get("page")) next.set("page", "1");
     setSearchParams(next, { replace: true });
   }
 
@@ -107,128 +157,285 @@ export default function CourseListPage() {
     });
   }
 
+  function goToPage(page) {
+    updateParams((next) => next.set("page", String(page)));
+    setScrollPages(0);
+    window.scrollTo({ top: 360, behavior: "smooth" });
+  }
+
   function clearFilters() {
     const next = new URLSearchParams();
-    if (filters.search) next.set("search", filters.search);
     next.set("sort", "relevance");
     next.set("page", "1");
     setSearchParams(next, { replace: true });
   }
 
-  const courses = coursesQuery.data?.items || [];
-  const pagination = coursesQuery.data?.pagination;
+  const activeFilterChips = [];
+  filters.category.forEach((value) => {
+    activeFilterChips.push({ key: `cat-${value}`, label: value, onRemove: () => toggleMultiValue("category", value) });
+  });
+  filters.level.forEach((value) => {
+    activeFilterChips.push({ key: `lvl-${value}`, label: value, onRemove: () => toggleMultiValue("level", value) });
+  });
+  filters.language.forEach((value) => {
+    activeFilterChips.push({ key: `lang-${value}`, label: value, onRemove: () => toggleMultiValue("language", value) });
+  });
+  if (filters.rating) {
+    activeFilterChips.push({ key: "rating", label: `${filters.rating}★ & up`, onRemove: () => setSingleValue("rating", "") });
+  }
+  if (filters.price && filters.price !== "any") {
+    activeFilterChips.push({
+      key: "price",
+      label: filters.price === "free" ? "Free" : "Paid",
+      onRemove: () => setSingleValue("price", "any"),
+    });
+  }
+  if (filters.duration) {
+    const label = durationOptions.find((option) => option.value === filters.duration)?.label || filters.duration;
+    activeFilterChips.push({ key: "duration", label, onRemove: () => setSingleValue("duration", "") });
+  }
+
+  // Autocomplete suggestions — top 5 title/skill matches from the seed catalog.
+  const suggestions = useMemo(() => {
+    const term = filters.search.trim().toLowerCase();
+    if (!term) return [];
+    return seedCourses
+      .filter((course) => {
+        const skillText = (course.skills || []).join(" ").toLowerCase();
+        return (
+          course.title.toLowerCase().includes(term) ||
+          course.category.toLowerCase().includes(term) ||
+          course.instructorName.toLowerCase().includes(term) ||
+          skillText.includes(term)
+        );
+      })
+      .slice(0, 6);
+  }, [filters.search]);
 
   return (
-    <PageShell 
-      title="Course Catalog" 
-      subtitle="Explore specialized courses and boost your skills."
-      searchValue={filters.search}
-      onSearchChange={(e) => setSearch(e.target.value)}
-    >
-      {/* Mobile Filter Button - only shows on small screens */}
-      <div className="mb-6 lg:hidden">
-        <button
-          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
-          onClick={() => setMobileFiltersOpen(true)}
-        >
-          <Filter className="h-4 w-4" />
-          Filters
-        </button>
-      </div>
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_25%),linear-gradient(180deg,#ffffff_0%,#eef4ff_100%)]">
+      <MarketingHeader />
 
-      <div className="grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
-        {/* Left Side: Filter Sidebar (Desktop) */}
-        <aside className="hidden lg:block">
-          <FilterSidebar 
-            filters={filters} 
-            onToggleMultiValue={toggleMultiValue} 
-            onSetSingleValue={setSingleValue} 
-            onClear={clearFilters} 
-          />
-        </aside>
-
-        {/* Right Side: Results Area */}
-        <div className="space-y-6">
-          <div className="surface p-5">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <p className="text-sm text-slate-500">
-                {coursesQuery.isLoading ? "Loading results..." : `${(pagination?.totalItems || 0).toLocaleString()} results`}
+      <main className="pt-24">
+        {/* Hero */}
+        <section className="mx-auto w-full max-w-7xl px-6 pt-10 pb-8 lg:px-8">
+          <div className="flex flex-col gap-6">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-brand-600">
+                <Sparkles className="h-3.5 w-3.5" /> Course Catalog
+              </span>
+              <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950 lg:text-5xl">
+                Learn anything. Anywhere. At your pace.
+              </h1>
+              <p className="mt-4 max-w-2xl text-base text-slate-500 lg:text-lg">
+                Explore {seedCourses.length}+ courses across Tech, Business, Design, Personal Development, and more. No account required to browse.
               </p>
-              <div className="w-full md:w-72">
-                <Select value={filters.sort} onChange={(event) => setSingleValue("sort", event.target.value)}>
-                  <option value="relevance">Relevance</option>
-                  <option value="newest">Newest</option>
-                  <option value="highest-rated">Highest rated</option>
-                  <option value="most-popular">Most popular</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                </Select>
-              </div>
             </div>
+
+            {/* Big search with autocomplete */}
+            <div className="relative w-full max-w-3xl">
+              <label className="flex h-14 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 shadow-soft focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100">
+                <SearchIcon className="h-5 w-5 text-slate-400" />
+                <input
+                  className="h-full w-full bg-transparent text-base outline-none placeholder:text-slate-400"
+                  value={filters.search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  onFocus={() => setSuggestionsOpen(true)}
+                  onBlur={() => setTimeout(() => setSuggestionsOpen(false), 150)}
+                  placeholder="Search by course, instructor, skill, or category"
+                  aria-label="Search courses"
+                />
+                {filters.search ? (
+                  <button
+                    type="button"
+                    className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                    onClick={() => setSearch("")}
+                    aria-label="Clear search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </label>
+
+              {suggestionsOpen && suggestions.length > 0 ? (
+                <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-panel">
+                  <ul>
+                    {suggestions.map((course) => (
+                      <li key={course.id}>
+                        <button
+                          type="button"
+                          className="flex w-full items-center gap-4 px-5 py-3 text-left transition hover:bg-slate-50"
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            setSearch(course.title);
+                            setSuggestionsOpen(false);
+                            prefetchCourse(course.id);
+                          }}
+                        >
+                          <img src={course.thumbnail} alt="" className="h-10 w-14 rounded-lg object-cover" loading="lazy" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-slate-950">{course.title}</p>
+                            <p className="truncate text-xs text-slate-500">
+                              {course.category} · {course.instructorName}
+                            </p>
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+
+            {activeFilterChips.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Active filters</span>
+                {activeFilterChips.map((chip) => (
+                  <button
+                    key={chip.key}
+                    type="button"
+                    onClick={chip.onRemove}
+                    className="inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white transition hover:bg-slate-700"
+                  >
+                    {chip.label}
+                    <X className="h-3 w-3" />
+                  </button>
+                ))}
+                <button type="button" className="text-xs font-semibold text-brand-600 hover:text-brand-700" onClick={clearFilters}>
+                  Clear all
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </section>
+
+        {/* Catalog body */}
+        <section className="mx-auto w-full max-w-7xl px-6 pb-16 lg:px-8">
+          {/* Mobile filter button */}
+          <div className="mb-6 lg:hidden">
+            <button
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
+              onClick={() => setMobileFiltersOpen(true)}
+            >
+              <Filter className="h-4 w-4" />
+              Filters
+            </button>
           </div>
 
-          {/* Error & Loading States */}
-          {coursesQuery.isLoading && <Spinner label="Loading courses" />}
-          {coursesQuery.isError && <ErrorState message={coursesQuery.error.message} onAction={() => coursesQuery.refetch()} />}
-
-          {/* The Course Grid */}
-          {!coursesQuery.isLoading && !coursesQuery.isError && courses.length > 0 ? (
-            <>
-              <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {courses.map((course) => {
-                  const isEnrolled = Boolean(enrollmentsQuery.data?.some((item) => item.courseId === course.id));
-                  return (
-                    <CourseCard
-                      key={course.id}
-                      course={course}
-                      onHover={prefetchCourse}
-                      instructorHref={`/instructor/${course.instructorId}/profile`}
-                      actionLabel={isEnrolled ? "Go to course" : "View course"}
-                      actionHref={isEnrolled ? `/courses/${course.id}` : `/courses/${course.id}/preview`}
-                      actionVariant={isEnrolled ? "secondary" : "primary"}
-                    />
-                  );
-                })}
-              </section>
-              
-              <div className="mt-10">
-                <Pagination 
-                  currentPage={pagination?.page || 1} 
-                  totalPages={pagination?.totalPages || 1} 
-                  onPageChange={(page) => setSingleValue("page", String(page))} 
-                />
+          <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
+            {/* Desktop sidebar filters (sticky) */}
+            <aside className="hidden lg:block">
+              <div className="sticky top-28">
+                <FilterSidebar filters={filters} onToggleMultiValue={toggleMultiValue} onSetSingleValue={setSingleValue} onClear={clearFilters} />
               </div>
-            </>
-          ) : !coursesQuery.isLoading && (
-            <EmptyState
-              title="No courses found"
-              message="Try adjusting your filters."
-              action={<button className="font-semibold text-brand-600" onClick={clearFilters}>Clear all filters</button>}
-            />
-          )}
-        </div>
-      </div>
+            </aside>
 
-      {/* Mobile Filter Modal */}
+            {/* Results column */}
+            <div className="space-y-6">
+              <div className="surface flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
+                <p className="text-sm text-slate-500">
+                  {coursesQuery.isLoading
+                    ? "Loading results..."
+                    : `Showing ${courses.length.toLocaleString()} of ${totalItems.toLocaleString()} courses`}
+                </p>
+                <div className="w-full md:w-72">
+                  <Select value={filters.sort} onChange={(event) => setSingleValue("sort", event.target.value)} aria-label="Sort results">
+                    <option value="relevance">Relevance</option>
+                    <option value="most-popular">Most popular</option>
+                    <option value="highest-rated">Highest rated</option>
+                    <option value="newest">Newest</option>
+                    <option value="trending">Trending</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                  </Select>
+                </div>
+              </div>
+
+              {coursesQuery.isLoading && courses.length === 0 ? <Spinner label="Loading courses" /> : null}
+              {coursesQuery.isError ? <ErrorState message={coursesQuery.error.message} onAction={() => coursesQuery.refetch()} /> : null}
+
+              {!coursesQuery.isLoading && !coursesQuery.isError && courses.length > 0 ? (
+                <>
+                  <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                    {courses.map((course) => {
+                      const isEnrolled = Boolean(enrollmentsQuery.data?.some((item) => item.courseId === course.id));
+                      return (
+                        <CourseCard
+                          key={course.id}
+                          course={course}
+                          onHover={prefetchCourse}
+                          instructorHref={`/instructor/${course.instructorId}/profile`}
+                          actionLabel={isEnrolled ? "Continue learning" : "View course"}
+                          actionHref={isEnrolled ? `/courses/${course.id}` : `/courses/${course.id}/preview`}
+                          actionVariant={isEnrolled ? "secondary" : "primary"}
+                        />
+                      );
+                    })}
+                  </section>
+
+                  {/* Sentinel — triggers auto-load until cap */}
+                  <div ref={sentinelRef} aria-hidden="true" className="h-4" />
+
+                  {coursesQuery.isFetching && courses.length > 0 ? (
+                    <div className="flex justify-center py-4">
+                      <Spinner label="Loading more" />
+                    </div>
+                  ) : null}
+
+                  {/* Hybrid pagination footer */}
+                  <div className="mt-8 flex flex-col items-center gap-4 border-t border-slate-200 pt-8">
+                    {hasMoreInScroll ? null : pagination?.hasMore ? (
+                      <button
+                        type="button"
+                        onClick={() => setScrollPages((value) => value + 1)}
+                        className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-soft transition hover:-translate-y-0.5 hover:shadow-xl"
+                      >
+                        Load more courses
+                      </button>
+                    ) : (
+                      <p className="text-sm text-slate-500">You've reached the end of this page.</p>
+                    )}
+
+                    <Pagination currentPage={filters.page} totalPages={totalPages} onPageChange={goToPage} />
+                  </div>
+                </>
+              ) : null}
+
+              {!coursesQuery.isLoading && !coursesQuery.isError && courses.length === 0 ? (
+                <EmptyState
+                  title="No courses found"
+                  message="Try adjusting your filters or searching for something different."
+                  action={
+                    <button className="font-semibold text-brand-600" onClick={clearFilters}>
+                      Clear all filters
+                    </button>
+                  }
+                />
+              ) : null}
+            </div>
+          </div>
+        </section>
+
+        <MarketingFooter />
+      </main>
+
+      {/* Mobile filter modal */}
       <Modal open={mobileFiltersOpen} title="Filters" onClose={() => setMobileFiltersOpen(false)}>
-        <FilterSidebar
-          filters={filters}
-          onToggleMultiValue={toggleMultiValue}
-          onSetSingleValue={setSingleValue}
-          onClear={clearFilters}
-        />
+        <FilterSidebar filters={filters} onToggleMultiValue={toggleMultiValue} onSetSingleValue={setSingleValue} onClear={clearFilters} />
       </Modal>
-    </PageShell>
+    </div>
   );
 }
-
 
 function FilterSidebar({ filters, onToggleMultiValue, onSetSingleValue, onClear }) {
   return (
     <div className="surface p-5">
-      <button className="text-sm font-semibold text-brand-600" onClick={onClear}>
-        Clear all filters
-      </button>
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Filters</h2>
+        <button className="text-xs font-semibold text-brand-600 hover:text-brand-700" onClick={onClear}>
+          Reset
+        </button>
+      </div>
 
       <FilterSection title="Category">
         {categoryOptions.map((option) => (
@@ -248,6 +455,17 @@ function FilterSidebar({ filters, onToggleMultiValue, onSetSingleValue, onClear 
             label={option}
             checked={filters.level.includes(option)}
             onChange={() => onToggleMultiValue("level", option)}
+          />
+        ))}
+      </FilterSection>
+
+      <FilterSection title="Language">
+        {languageOptions.map((option) => (
+          <FilterCheck
+            key={option}
+            label={option}
+            checked={filters.language.includes(option)}
+            onChange={() => onToggleMultiValue("language", option)}
           />
         ))}
       </FilterSection>
@@ -294,7 +512,7 @@ function FilterSidebar({ filters, onToggleMultiValue, onSetSingleValue, onClear 
 function FilterSection({ title, children }) {
   return (
     <section className="mt-6 border-t border-slate-200 pt-6">
-      <h2 className="text-sm font-semibold text-slate-950">{title}</h2>
+      <h3 className="text-sm font-semibold text-slate-950">{title}</h3>
       <div className="mt-4 space-y-3">{children}</div>
     </section>
   );
@@ -302,8 +520,8 @@ function FilterSection({ title, children }) {
 
 function FilterCheck({ label, checked, onChange }) {
   return (
-    <label className="flex items-center gap-3 text-sm text-slate-600">
-      <input type="checkbox" className="h-4 w-4 rounded border-slate-300" checked={checked} onChange={onChange} />
+    <label className="flex cursor-pointer items-center gap-3 text-sm text-slate-600 hover:text-slate-900">
+      <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" checked={checked} onChange={onChange} />
       <span>{label}</span>
     </label>
   );
@@ -311,14 +529,15 @@ function FilterCheck({ label, checked, onChange }) {
 
 function FilterRadio({ name, label, checked, onChange }) {
   return (
-    <label className="flex items-center gap-3 text-sm text-slate-600">
-      <input type="radio" name={name} className="h-4 w-4 border-slate-300" checked={checked} onChange={onChange} />
+    <label className="flex cursor-pointer items-center gap-3 text-sm text-slate-600 hover:text-slate-900">
+      <input type="radio" name={name} className="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-500" checked={checked} onChange={onChange} />
       <span>{label}</span>
     </label>
   );
 }
 
 function Pagination({ currentPage, totalPages, onPageChange }) {
+  if (totalPages <= 1) return null;
   const pages = [];
   const start = Math.max(1, currentPage - 2);
   const end = Math.min(totalPages, start + 4);
@@ -327,9 +546,9 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="flex flex-wrap items-center justify-center gap-3">
       <button
-        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:text-slate-400"
+        className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:text-slate-400"
         disabled={currentPage <= 1}
         onClick={() => onPageChange(currentPage - 1)}
       >
@@ -340,7 +559,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
           <button
             key={page}
             className={cn(
-              "h-11 w-11 rounded-2xl text-sm font-semibold transition",
+              "h-10 w-10 rounded-2xl text-sm font-semibold transition",
               page === currentPage ? "bg-slate-950 text-white" : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
             )}
             onClick={() => onPageChange(page)}
@@ -350,7 +569,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
         ))}
       </div>
       <button
-        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:text-slate-400"
+        className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:text-slate-400"
         disabled={currentPage >= totalPages}
         onClick={() => onPageChange(currentPage + 1)}
       >

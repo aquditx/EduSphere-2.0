@@ -1,13 +1,16 @@
-﻿import { PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+﻿import { BookOpen, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 import Logo from "@/components/branding/Logo.jsx";
+import { seedCourses } from "@/data/mockData.js";
+import { useEnrollments } from "@/hooks/useProgress.js";
 import { useAuthStore } from "@/store/authStore.js";
 import { useUiStore } from "@/store/uiStore.js";
 import Button from "@/components/ui/Button.jsx";
 
 const studentLinks = [
   { to: "/dashboard", label: "Dashboard" },
-  { to: "/courses", label: "Courses" },
+  { to: "/courses", label: "Browse catalog" },
+  { to: "/student/assessments", label: "Assessments" },
 ];
 
 const instructorLinks = [
@@ -92,6 +95,47 @@ export function Navbar({ title, subtitle, searchValue = "", onSearchChange }) {
   );
 }
 
+function EnrolledCoursesList() {
+  const enrollmentsQuery = useEnrollments();
+  const enrollments = Array.isArray(enrollmentsQuery.data) ? enrollmentsQuery.data : [];
+  const enrolledCourses = enrollments
+    .map((enrollment) => seedCourses.find((course) => course.id === enrollment.courseId))
+    .filter(Boolean);
+
+  if (enrolledCourses.length === 0) {
+    return (
+      <div className="mt-4 rounded-2xl border border-dashed border-slate-200 p-4 text-xs text-slate-500">
+        You haven't enrolled in any courses yet.{" "}
+        <Link to="/courses" className="font-semibold text-brand-600 hover:text-brand-700">
+          Browse the catalog
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <ul className="mt-4 space-y-2">
+      {enrolledCourses.map((course) => (
+        <li key={course.id}>
+          <NavLink
+            to={`/courses/${course.id}`}
+            className={({ isActive }) =>
+              `flex items-center gap-3 rounded-2xl px-3 py-2 text-sm transition ${
+                isActive ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+              }`
+            }
+          >
+            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${course.accent} text-white`}>
+              <BookOpen className="h-4 w-4" />
+            </div>
+            <span className="line-clamp-2 text-xs font-semibold leading-tight">{course.title}</span>
+          </NavLink>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function Sidebar() {
   const user = useAuthStore((state) => state.user);
   const sidebarOpen = useUiStore((state) => state.sidebarOpen);
@@ -101,6 +145,8 @@ export function Sidebar() {
     return null;
   }
 
+  const isStudent = user.role === "student";
+
   return (
     <aside className="hidden w-72 flex-col border-r border-slate-200 bg-white/80 px-6 py-8 backdrop-blur xl:flex">
       <Logo />
@@ -109,6 +155,7 @@ export function Sidebar() {
           <NavLink
             key={link.to}
             to={link.to}
+            end={link.to === "/dashboard" || link.to === "/instructor" || link.to === "/admin"}
             className={({ isActive }) =>
               `block rounded-2xl px-4 py-3 text-sm font-medium transition ${
                 isActive ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
@@ -119,6 +166,14 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {isStudent ? (
+        <div className="mt-8 border-t border-slate-200 pt-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">My courses</p>
+          <EnrolledCoursesList />
+        </div>
+      ) : null}
+
       <div className="mt-auto rounded-[2rem] bg-slate-950 p-5 text-white">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-200">Workspace</p>
         <p className="mt-3 text-lg font-semibold">{user.headline}</p>

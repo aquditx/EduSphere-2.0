@@ -1,13 +1,19 @@
 import { Link } from "react-router-dom";
+import CourseRail from "@/components/course/CourseRail.jsx";
 import CourseShowcase from "@/components/marketing/CourseShowcase.jsx";
 import FeatureGrid from "@/components/marketing/FeatureGrid.jsx";
 import HeroSection from "@/components/marketing/HeroSection.jsx";
 import MarketingFooter from "@/components/marketing/MarketingFooter.jsx";
 import MarketingHeader from "@/components/marketing/MarketingHeader.jsx";
 import PricingSection from "@/components/marketing/PricingSection.jsx";
+import { useNewReleases, useTopRatedCourses, useTrendingCourses } from "@/hooks/useRecommendations.js";
 import InstructorsSection from "../components/marketing/InstructorsSections";
 
 export default function LandingPage() {
+  const trending = useTrendingCourses(4);
+  const topRated = useTopRatedCourses(4);
+  const newReleases = useNewReleases(4);
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_25%),linear-gradient(180deg,#ffffff_0%,#eef4ff_100%)]">
       <MarketingHeader />
@@ -24,6 +30,30 @@ export default function LandingPage() {
         <div id="catalog">
           <CourseShowcase />
         </div>
+
+        <CourseRail
+          eyebrow="Trending now"
+          title="What the community is learning this week"
+          subtitle="Courses with the most momentum right now across every category."
+          courses={trending}
+          viewAllHref="/courses?sort=trending"
+        />
+
+        <CourseRail
+          eyebrow="Top rated"
+          title="Highest rated by learners"
+          subtitle="Courses with the strongest reviews from students who finished them."
+          courses={topRated}
+          viewAllHref="/courses?sort=highest-rated"
+        />
+
+        <CourseRail
+          eyebrow="New releases"
+          title="Fresh off the catalog"
+          subtitle="Recently published courses from instructors across every discipline."
+          courses={newReleases}
+          viewAllHref="/courses?sort=newest"
+        />
 
         <div id="instructors">
           <InstructorsSection />

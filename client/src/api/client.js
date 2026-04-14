@@ -1,6 +1,6 @@
 ﻿import { seedCourses, seedEnrollments, seedProgress, seedReports, seedUsers } from "@/data/mockData.js";
 
-const STORAGE_KEY = "EduSphere-lms-db";
+const STORAGE_KEY = "EduSphere-lms-db-v2";
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -374,19 +374,29 @@ async function handleGet(path, params = {}) {
       status = "approved",
       instructorId,
       price = "any",
+      language = "",
     } = params;
     const categories = normalizeList(category).filter((item) => item !== "All");
     const levels = normalizeList(level).filter((item) => item !== "All" && item !== "All levels");
+    const languages = normalizeList(language).filter((item) => item !== "All");
     let courses = db.courses.filter((course) => (status === "all" ? true : course.status === status));
     if (instructorId) {
       courses = courses.filter((course) => course.instructorId === instructorId);
     }
     const normalizedSearch = String(search).trim().toLowerCase();
     courses = courses.filter((course) => {
-      const matchesSearch = !normalizedSearch || course.title.toLowerCase().includes(normalizedSearch) || course.description.toLowerCase().includes(normalizedSearch);
+      const skillsText = Array.isArray(course.skills) ? course.skills.join(" ").toLowerCase() : "";
+      const matchesSearch =
+        !normalizedSearch ||
+        course.title.toLowerCase().includes(normalizedSearch) ||
+        course.description.toLowerCase().includes(normalizedSearch) ||
+        (course.instructorName || "").toLowerCase().includes(normalizedSearch) ||
+        (course.category || "").toLowerCase().includes(normalizedSearch) ||
+        skillsText.includes(normalizedSearch);
       const matchesCategory = categories.length === 0 || categories.includes(course.category);
       const matchesLevel = levels.length === 0 || levels.includes(course.level);
-      return matchesSearch && matchesCategory && matchesLevel && durationFilter(course, duration) && ratingFilter(course, rating) && priceFilter(course, price);
+      const matchesLanguage = languages.length === 0 || languages.includes(course.language || "English");
+      return matchesSearch && matchesCategory && matchesLevel && matchesLanguage && durationFilter(course, duration) && ratingFilter(course, rating) && priceFilter(course, price);
     });
     const sorted = sortCourses(courses, sort).map(getCourseRuntime);
     const offset = (Number(page) - 1) * Number(pageSize);
