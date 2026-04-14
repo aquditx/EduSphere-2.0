@@ -5,11 +5,13 @@ import Spinner from "@/components/ui/Spinner.jsx";
 import { useAuthStore } from "@/store/authStore.js";
 
 const LandingPage = lazy(() => import("@/pages/LandingPage.jsx"));
+const CoursePreviewPage = lazy(() => import("@/pages/marketing/CoursePreviewPage.jsx"));
 const TeachPage = lazy(() => import("@/pages/marketing/TeachPage.jsx"));
 const MarketingInfoPage = lazy(() => import("@/pages/marketing/MarketingInfoPage.jsx"));
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage.jsx"));
 const SignupPage = lazy(() => import("@/pages/auth/RegisterPage.jsx"));
 const InstructorAppliedPage = lazy(() => import("@/pages/auth/InstructorAppliedPage.jsx"));
+const CheckoutPage = lazy(() => import("@/pages/student/CheckoutPage.jsx"));
 const StudentDashboardPage = lazy(() => import("@/pages/student/StudentDashboardPage.jsx"));
 const StudentAssessmentsPage = lazy(() => import("@/pages/student/StudentAssessmentsPage.jsx"));
 const StudentAssessmentLessonPage = lazy(() => import("@/pages/student/StudentAssessmentLessonPage.jsx"));
@@ -69,6 +71,7 @@ export function AppRoutes() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/courses" element={<CourseListPage />} />
+        <Route path="/courses/:id/preview" element={<CoursePreviewPage />} />
         <Route path="/teach" element={<TeachPage />} />
         <Route path="/about" element={<MarketingInfoPage />} />
         <Route path="/blog" element={<MarketingInfoPage />} />
@@ -91,6 +94,7 @@ export function AppRoutes() {
           <Route path="/student/dashboard" element={<Navigate to="/dashboard" replace />} />
           <Route path="/student/assessments" element={<StudentAssessmentsPage />} />
           <Route path="/student/assessments/:courseId/:lessonId" element={<StudentAssessmentLessonPage />} />
+          <Route path="/checkout/:courseId" element={<CheckoutPage />} />
           <Route path="/courses/:id" element={<CourseDetailsPage />} />
           <Route path="/learn/:courseId/:lessonId" element={<CoursePlayerPage />} />
         </Route>

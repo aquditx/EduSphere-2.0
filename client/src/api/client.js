@@ -12,6 +12,7 @@ function createInitialState() {
     courses: clone(seedCourses),
     enrollments: clone(seedEnrollments),
     progress: clone(seedProgress),
+    payments: [],
     reports: clone(seedReports),
   };
 }
@@ -29,7 +30,19 @@ function loadDb() {
   }
 
   try {
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    const normalized = {
+      ...createInitialState(),
+      ...parsed,
+      users: parsed.users || clone(seedUsers),
+      courses: parsed.courses || clone(seedCourses),
+      enrollments: parsed.enrollments || clone(seedEnrollments),
+      progress: parsed.progress || clone(seedProgress),
+      payments: parsed.payments || [],
+      reports: parsed.reports || clone(seedReports),
+    };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+    return normalized;
   } catch {
     const initial = createInitialState();
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
@@ -52,6 +65,41 @@ function withDb(mutator) {
 
 function wait(ms = 180) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function ensureEnrollment(draft, courseId, userId, lessonId) {
+  const exists = draft.enrollments.find((item) => item.userId === userId && item.courseId === courseId);
+  if (exists) {
+    return exists;
+  }
+
+  const enrollment = {
+    id: `enrollment-${Date.now()}`,
+    userId,
+    courseId,
+    enrolledAt: new Date().toISOString(),
+  };
+
+  draft.enrollments.unshift(enrollment);
+
+  draft.progress.unshift({
+    id: `progress-${Date.now()}`,
+    userId,
+    courseId,
+    lastLessonId: lessonId,
+    completedLessonIds: [],
+    lessonTimes: {},
+    quizResults: {},
+    updatedAt: new Date().toISOString(),
+  });
+
+  const course = draft.courses.find((item) => item.id === courseId);
+  if (course) {
+    course.enrollmentCount = (course.enrollmentCount || 0) + 1;
+    course.updatedAt = new Date().toISOString();
+  }
+
+  return enrollment;
 }
 
 function flattenLessons(course) {
@@ -559,6 +607,15 @@ async function handleGet(path, params = {}) {
     return db.progress.find((item) => item.userId === userId && item.courseId === courseId) || null;
   }
 
+  if (path === "/payments/status") {
+    const { userId, courseId } = params;
+    const payment = db.payments.find((item) => item.userId === userId && item.courseId === courseId && item.status === "paid");
+    return {
+      hasPaid: Boolean(payment),
+      payment: payment || null,
+    };
+  }
+
   if (path === "/dashboard/student") {
     return buildDashboard(db, params.userId);
   }
@@ -631,27 +688,37 @@ async function handlePost(path, body = {}) {
 
   if (path === "/enroll") {
     return withDb((draft) => {
-      const exists = draft.enrollments.find((item) => item.userId === body.userId && item.courseId === body.courseId);
-      if (!exists) {
-        draft.enrollments.unshift({
-          id: `enrollment-${Date.now()}`,
-          userId: body.userId,
-          courseId: body.courseId,
-          enrolledAt: new Date().toISOString(),
-        });
-        draft.progress.unshift({
-          id: `progress-${Date.now()}`,
-          userId: body.userId,
-          courseId: body.courseId,
-          lastLessonId: body.lessonId,
-          completedLessonIds: [],
-          lessonTimes: {},
-          quizResults: {},
-          updatedAt: new Date().toISOString(),
-        });
-      }
+      ensureEnrollment(draft, body.courseId, body.userId, body.lessonId);
       return draft;
     }).enrollments[0];
+  }
+
+  if (path === "/payments/checkout") {
+    const db = withDb((draft) => {
+      const existingPayment = draft.payments.find((item) => item.userId === body.userId && item.courseId === body.courseId && item.status === "paid");
+      if (!existingPayment) {
+        draft.payments.unshift({
+          id: `payment-${Date.now()}`,
+          userId: body.userId,
+          courseId: body.courseId,
+          amount: Number(body.amount || 0),
+          cardLast4: String(body.cardNumber || "").replace(/\D/g, "").slice(-4),
+          cardholderName: body.cardholderName,
+          status: "paid",
+          transactionId: `txn-${Date.now()}`,
+          paidAt: new Date().toISOString(),
+        });
+      }
+
+      ensureEnrollment(draft, body.courseId, body.userId, body.lessonId);
+      return draft;
+    });
+
+    const payment = db.payments.find((item) => item.userId === body.userId && item.courseId === body.courseId && item.status === "paid");
+    return {
+      success: true,
+      payment,
+    };
   }
 
   if (path === "/reviews") {

@@ -16,8 +16,8 @@ export default function MarketingHeader() {
         <Logo />
 
         <nav className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
-          <button 
-            onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} 
+          <button
+            onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
             className="hover:text-slate-950 transition-colors"
           >
             Home

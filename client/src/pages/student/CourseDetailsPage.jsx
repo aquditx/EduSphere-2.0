@@ -1,5 +1,5 @@
 ﻿import { useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import CourseHero from "@/components/course/CourseHero.jsx";
 import ModuleAccordion from "@/components/course/ModuleAccordion.jsx";
 import ReviewList from "@/components/course/ReviewList.jsx";
@@ -71,6 +71,10 @@ export default function CourseDetailsPage() {
         <ErrorState message={courseQuery.error.message} onAction={() => courseQuery.refetch()} />
       </PageShell>
     );
+  }
+
+  if (!isEnrolled) {
+    return <Navigate to={`/courses/${id}/preview`} replace />;
   }
 
   return (

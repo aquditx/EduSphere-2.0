@@ -4,7 +4,7 @@ import Button from "@/components/ui/Button.jsx";
 import { formatMinutes } from "@/utils/index.js";
 
 export default function CourseCard({ course, onHover, instructorHref, actionLabel, actionHref, actionVariant = "primary" }) {
-  const courseHref = actionLabel === "Enroll" && actionHref ? actionHref : `/courses/${course.id}`;
+  const courseHref = `/courses/${course.id}/preview`;
 
   return (
     <article className="surface overflow-hidden">

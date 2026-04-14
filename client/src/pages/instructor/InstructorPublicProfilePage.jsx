@@ -9,6 +9,7 @@ import Spinner from "@/components/ui/Spinner.jsx";
 import MarketingFooter from "@/components/marketing/MarketingFooter.jsx";
 import MarketingHeader from "@/components/marketing/MarketingHeader.jsx";
 import { useInstructorPublicProfile } from "@/hooks/useInstructorHooks.js";
+import { useEnrollments } from "@/hooks/useProgress.js";
 import { useAuthStore } from "@/store/authStore.js";
 import { formatDate } from "@/utils/index.js";
 
@@ -24,6 +25,7 @@ const REVIEWS_PER_PAGE = 10;
 export default function InstructorPublicProfilePage() {
   const { instructorId } = useParams();
   const user = useAuthStore((state) => state.user);
+  const enrollmentsQuery = useEnrollments();
   const profileQuery = useInstructorPublicProfile(instructorId);
   const [reviewPage, setReviewPage] = useState(1);
 
@@ -51,9 +53,6 @@ export default function InstructorPublicProfilePage() {
   const visibleReviews = reviewStats.latestReviews.slice((reviewPage - 1) * REVIEWS_PER_PAGE, reviewPage * REVIEWS_PER_PAGE);
   const totalReviewPages = Math.max(1, Math.ceil(reviewStats.latestReviews.length / REVIEWS_PER_PAGE));
   const safeBio = sanitizeHtml(instructor.bio);
-  const courseActionLabel = user.role === "student" ? "Go to course" : "Enroll";
-  const courseActionHref = (courseId) => (user.role === "student" ? `/courses/${courseId}` : "/login?role=student");
-
   return (
     <PageFrame>
       <main className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
@@ -129,9 +128,9 @@ export default function InstructorPublicProfilePage() {
                     key={course.id}
                     course={course}
                     instructorHref={`/instructor/${course.instructorId}/profile`}
-                    actionLabel={courseActionLabel}
-                    actionHref={courseActionHref(course.id)}
-                    actionVariant={user.role === "student" ? "secondary" : "primary"}
+                    actionLabel={enrollmentsQuery.data?.some((item) => item.courseId === course.id) ? "Go to course" : "View course"}
+                    actionHref={enrollmentsQuery.data?.some((item) => item.courseId === course.id) ? `/courses/${course.id}` : `/courses/${course.id}/preview`}
+                    actionVariant={enrollmentsQuery.data?.some((item) => item.courseId === course.id) ? "secondary" : "primary"}
                   />
                 ))}
               </div>

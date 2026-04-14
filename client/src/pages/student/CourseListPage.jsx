@@ -11,7 +11,7 @@ import Spinner from "@/components/ui/Spinner.jsx";
 import { seedCourses } from "@/data/mockData.js";
 import { useCourses, usePrefetchCourse } from "@/hooks/useCourses.js";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue.js";
-import { useAuthStore } from "@/store/authStore.js";
+import { useEnrollments } from "@/hooks/useProgress.js";
 import { cn } from "@/utils/index.js";
 import { PageShell } from "@/components/layout/PageShell.jsx";
 
@@ -37,8 +37,8 @@ const durationOptions = [
 export default function CourseListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const user = useAuthStore((state) => state.user);
   const prefetchCourse = usePrefetchCourse();
+  const enrollmentsQuery = useEnrollments();
 
   const filters = {
     search: searchParams.get("search") || "",
@@ -175,17 +175,20 @@ export default function CourseListPage() {
           {!coursesQuery.isLoading && !coursesQuery.isError && courses.length > 0 ? (
             <>
               <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {courses.map((course) => (
-                  <CourseCard
-                    key={course.id}
-                    course={course}
-                    onHover={prefetchCourse}
-                    instructorHref={`/instructor/${course.instructorId}/profile`}
-                    actionLabel={user.role === "student" ? "Go to course" : "Enroll"}
-                    actionHref={user.role === "student" ? `/courses/${course.id}` : "/login?role=student"}
-                    actionVariant={user.role === "student" ? "secondary" : "primary"}
-                  />
-                ))}
+                {courses.map((course) => {
+                  const isEnrolled = Boolean(enrollmentsQuery.data?.some((item) => item.courseId === course.id));
+                  return (
+                    <CourseCard
+                      key={course.id}
+                      course={course}
+                      onHover={prefetchCourse}
+                      instructorHref={`/instructor/${course.instructorId}/profile`}
+                      actionLabel={isEnrolled ? "Go to course" : "View course"}
+                      actionHref={isEnrolled ? `/courses/${course.id}` : `/courses/${course.id}/preview`}
+                      actionVariant={isEnrolled ? "secondary" : "primary"}
+                    />
+                  );
+                })}
               </section>
               
               <div className="mt-10">
