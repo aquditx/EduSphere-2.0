@@ -2,7 +2,8 @@
 
 const BASE_URL = "http://localhost:8000/api";
 
-// KEEP MOCK for now fix this later
+// Hits courses-service GET /enrollments (proxied via gateway) with the bearer
+// token. The backend reads user_id from the token when no ?userId is passed.
 export function getEnrollments(userId) {
   return apiClient.get("/enrollments", { params: { userId } });
 }

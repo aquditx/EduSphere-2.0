@@ -1,7 +1,6 @@
 ﻿import { BookOpen, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 import Logo from "@/components/branding/Logo.jsx";
-import { seedCourses } from "@/data/mockData.js";
 import { useEnrollments } from "@/hooks/useProgress.js";
 import { useAuthStore } from "@/store/authStore.js";
 import { useUiStore } from "@/store/uiStore.js";
@@ -98,9 +97,13 @@ export function Navbar({ title, subtitle, searchValue = "", onSearchChange }) {
 function EnrolledCoursesList() {
   const enrollmentsQuery = useEnrollments();
   const enrollments = Array.isArray(enrollmentsQuery.data) ? enrollmentsQuery.data : [];
-  const enrolledCourses = enrollments
-    .map((enrollment) => seedCourses.find((course) => course.id === enrollment.courseId))
-    .filter(Boolean);
+  // Backend /enrollments JOINs courses, so each enrollment already carries
+  // the fields we need to render (title, accent, slug).
+  const enrolledCourses = enrollments.map((enrollment) => ({
+    id: enrollment.courseId,
+    title: enrollment.title || "Untitled course",
+    accent: enrollment.accent || "from-slate-500 via-slate-600 to-slate-700",
+  }));
 
   if (enrolledCourses.length === 0) {
     return (

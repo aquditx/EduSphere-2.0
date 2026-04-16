@@ -1,0 +1,16 @@
+{
+  "name": "edusphere-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Root launcher for the EDDDUSPHERE microservices + frontend. `npm run dev` boots everything in one terminal.",
+  "scripts": {
+    "dev": "concurrently --kill-others-on-fail --prefix \"[{name}]\" --names \"AUTH,COURSES,TEACHERS,PROGRESS,GATEWAY,CLIENT\" --prefix-colors \"cyan,green,magenta,yellow,blue,white\" \"cd backend/auth_login && npm run dev\" \"cd backend/courses-service && npm run dev\" \"cd backend/teachers-service && npm run dev\" \"cd backend/progress-tracker && npm start\" \"cd gateway && npm start\" \"cd client && npm run dev\"",
+    "dev:backend": "concurrently --kill-others-on-fail --prefix \"[{name}]\" --names \"AUTH,COURSES,TEACHERS,PROGRESS,GATEWAY\" --prefix-colors \"cyan,green,magenta,yellow,blue\" \"cd backend/auth_login && npm run dev\" \"cd backend/courses-service && npm run dev\" \"cd backend/teachers-service && npm run dev\" \"cd backend/progress-tracker && npm start\" \"cd gateway && npm start\"",
+    "dev:client": "cd client && npm run dev",
+    "install:all": "npm install && npm --prefix backend/auth_login install && npm --prefix backend/courses-service install && npm --prefix backend/teachers-service install && npm --prefix backend/progress-tracker install && npm --prefix gateway install && npm --prefix client install",
+    "seed": "cd backend/courses-service && npm run seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

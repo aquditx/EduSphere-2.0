@@ -21,9 +21,11 @@ CREATE TABLE IF NOT EXISTS courses (
   thumbnail        TEXT,
   accent           VARCHAR(120),
   skills           TEXT[]       NOT NULL DEFAULT '{}',
+  outcomes         TEXT[]       NOT NULL DEFAULT '{}',
   status           VARCHAR(20)  NOT NULL DEFAULT 'draft'
                    CHECK (status IN ('draft','pending','approved','rejected')),
   instructor_id    INT          NOT NULL,
+  instructor_name  VARCHAR(120),             -- denormalized from auth for fast reads
   created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   updated_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
@@ -67,6 +69,10 @@ CREATE TABLE IF NOT EXISTS reviews (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (course_id, user_id)
 );
+
+-- Migration: if you already ran the old schema, add the new columns in place:
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS instructor_name VARCHAR(120);
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS outcomes TEXT[] NOT NULL DEFAULT '{}';
 
 CREATE INDEX IF NOT EXISTS idx_courses_status     ON courses(status);
 CREATE INDEX IF NOT EXISTS idx_courses_category   ON courses(category);

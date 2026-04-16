@@ -1,4 +1,5 @@
 import pool from '../config/db.js';
+import { serializeReview } from '../utils/serialize.js';
 
 export async function listReviews(req, res) {
   try {
@@ -7,7 +8,7 @@ export async function listReviews(req, res) {
       `SELECT * FROM reviews WHERE course_id = $1 ORDER BY created_at DESC`,
       [courseId]
     );
-    res.json(result.rows);
+    res.json(result.rows.map(serializeReview));
   } catch (err) {
     console.error('[courses-service] listReviews failed', err);
     res.status(500).json({ error: err.message });
@@ -51,7 +52,7 @@ export async function submitReview(req, res) {
     );
 
     await client.query('COMMIT');
-    res.status(201).json(insert.rows[0]);
+    res.status(201).json(serializeReview(insert.rows[0]));
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('[courses-service] submitReview failed', err);

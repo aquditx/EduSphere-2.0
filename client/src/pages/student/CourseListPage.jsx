@@ -9,7 +9,6 @@ import ErrorState from "@/components/ui/ErrorState.jsx";
 import Modal from "@/components/ui/Modal.jsx";
 import Select from "@/components/ui/Select.jsx";
 import Spinner from "@/components/ui/Spinner.jsx";
-import { seedCourses } from "@/data/mockData.js";
 import { useCourses, usePrefetchCourse } from "@/hooks/useCourses.js";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue.js";
 import { useEnrollments } from "@/hooks/useProgress.js";
@@ -18,8 +17,15 @@ import { cn } from "@/utils/index.js";
 const PAGE_SIZE = 12;
 const MAX_SCROLL_PAGES = 2; // auto-append up to 2 extra pages via infinite scroll
 
-const categoryOptions = Array.from(new Set(seedCourses.map((course) => course.category))).sort();
-const languageOptions = Array.from(new Set(seedCourses.map((course) => course.language || "English"))).sort();
+// Static options used by the sidebar — categories the backend catalog exposes.
+const categoryOptions = [
+  "Tech",
+  "Business",
+  "Design",
+  "Personal Development",
+  "Misc",
+];
+const languageOptions = ["English", "Spanish"];
 const levelOptions = ["Beginner", "Intermediate", "Advanced"];
 const ratingOptions = [
   { label: "4.5 & up", value: "4.5" },
@@ -195,22 +201,14 @@ export default function CourseListPage() {
     activeFilterChips.push({ key: "duration", label, onRemove: () => setSingleValue("duration", "") });
   }
 
-  // Autocomplete suggestions — top 5 title/skill matches from the seed catalog.
+  // Autocomplete suggestions — top 6 title/skill matches from the current
+  // search result page (the catalog is already filtered server-side).
   const suggestions = useMemo(() => {
     const term = filters.search.trim().toLowerCase();
     if (!term) return [];
-    return seedCourses
-      .filter((course) => {
-        const skillText = (course.skills || []).join(" ").toLowerCase();
-        return (
-          course.title.toLowerCase().includes(term) ||
-          course.category.toLowerCase().includes(term) ||
-          course.instructorName.toLowerCase().includes(term) ||
-          skillText.includes(term)
-        );
-      })
-      .slice(0, 6);
-  }, [filters.search]);
+    return courses.slice(0, 6);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.search, courses]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.12),transparent_25%),linear-gradient(180deg,#ffffff_0%,#eef4ff_100%)]">
@@ -228,7 +226,7 @@ export default function CourseListPage() {
                 Learn anything. Anywhere. At your pace.
               </h1>
               <p className="mt-4 max-w-2xl text-base text-slate-500 lg:text-lg">
-                Explore {seedCourses.length}+ courses across Tech, Business, Design, Personal Development, and more. No account required to browse.
+                Explore {totalItems > 0 ? totalItems : "50"}+ courses across Tech, Business, Design, Personal Development, and more. No account required to browse.
               </p>
             </div>
 

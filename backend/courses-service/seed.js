@@ -153,8 +153,8 @@ async function insertCourses(emailToUserId) {
         `INSERT INTO courses
          (slug, title, subtitle, description, category, level, language, duration_minutes,
           price, rating_average, rating_count, enrollment_count, trending_score,
-          thumbnail, accent, skills, status, instructor_id, created_at, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+          thumbnail, accent, skills, outcomes, status, instructor_id, instructor_name, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
          RETURNING id`,
         [
           course.slug,
@@ -173,8 +173,10 @@ async function insertCourses(emailToUserId) {
           course.thumbnail,
           course.accent,
           course.skills || [],
+          course.outcomes || [],
           'approved', // force approved so everything shows up in the public catalog
           instructorUserId,
+          course.instructorName,
           course.createdAt,
           course.updatedAt,
         ]

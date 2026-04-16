@@ -6,9 +6,10 @@ import {
   createCourse,
   updateCourse,
   deleteCourse,
+  duplicateCourse,
 } from '../controllers/courses.controller.js';
 import { listReviews, submitReview } from '../controllers/reviews.controller.js';
-import { enroll } from '../controllers/enrollments.controller.js';
+import { enroll, listCourseStudents } from '../controllers/enrollments.controller.js';
 
 const router = express.Router();
 
@@ -21,6 +22,8 @@ router.get('/:courseId/reviews', listReviews);
 router.post('/', requireAuth, requireRole('instructor', 'admin'), createCourse);
 router.patch('/:id', requireAuth, requireRole('instructor', 'admin'), updateCourse);
 router.delete('/:id', requireAuth, requireRole('instructor', 'admin'), deleteCourse);
+router.post('/:id/duplicate', requireAuth, requireRole('instructor', 'admin'), duplicateCourse);
+router.get('/:courseId/students', requireAuth, requireRole('instructor', 'admin'), listCourseStudents);
 
 // Students enroll & review
 router.post('/:id/enroll', requireAuth, requireRole('student'), enroll);

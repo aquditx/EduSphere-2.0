@@ -41,13 +41,17 @@ export default function CheckoutPage() {
     event.preventDefault();
     if (!course) return;
 
-    const payment = await checkoutMutation.mutateAsync({
-      amount: course.price,
-      lessonId: course.lessons[0]?.id,
-      ...values,
-    });
-
-    setSuccessPayment(payment.payment);
+    try {
+      const result = await checkoutMutation.mutateAsync({
+        amount: course.price,
+        lessonId: course.lessons?.[0]?.id,
+        ...values,
+      });
+      setSuccessPayment(result.payment);
+    } catch {
+      // The error is already attached to checkoutMutation.error and rendered
+      // in the form below — no extra handling needed.
+    }
   }
 
   if (courseQuery.isLoading || paymentStatusQuery.isLoading || enrollmentsQuery.isLoading) {
