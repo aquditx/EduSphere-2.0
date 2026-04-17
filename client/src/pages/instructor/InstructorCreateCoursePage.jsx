@@ -34,7 +34,7 @@ function initialValues(user) {
     title: "",
     subtitle: "",
     description: "",
-    category: "Design",
+    category: "Tech",
     level: "Beginner",
     language: "English",
     tags: [],

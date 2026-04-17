@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/GloriaRod/OneDrive/Desktop/Full/ Stack/EDDDUSPHERE/**)",
+      "Read(//c/Users/GloriaRod/OneDrive/Desktop/Full/ Stack/EDDDUSPHERE/gateway/**)"
+    ]
+  }
+}

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore.js";
 import {
   getInstructorCourses,
+  getInstructorDashboard,
   getCourseStudents,
   getInstructorAnalytics,
   getInstructorRevenue,
@@ -31,7 +32,24 @@ export function useInstructorDashboard() {
   const user = useAuthStore((state) => state.user);
   return useQuery({
     queryKey: ["instructor-dashboard", user.id],
-    queryFn: () => getInstructorDashboard(user.id),
+    queryFn: async () => {
+      const data = await getInstructorDashboard(user.id);
+      // The mock returns: { stats, courses, revenueTrend, topCourses, activityFeed, ... }
+      // The page expects: { stats, courses, revenueSeries (flat number[]), notifications }
+      const revenueSeries = Array.isArray(data.revenueTrend)
+        ? data.revenueTrend.map((entry) => entry.amount || entry.count || 0)
+        : Array.from({ length: 12 }).fill(0);
+      const notifications = Array.isArray(data.activityFeed)
+        ? data.activityFeed.map((entry) => ({
+            id: entry.id,
+            title: entry.title,
+            description: entry.title,
+            time: entry.time,
+            type: entry.type,
+          }))
+        : [];
+      return { ...data, revenueSeries, notifications };
+    },
     enabled: Boolean(user.id),
   });
 }

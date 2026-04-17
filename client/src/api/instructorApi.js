@@ -5,7 +5,7 @@ export function getInstructorDashboard(instructorId) {
 }
 
 export function getInstructorCourses(instructorId, filters = {}) {
-  return apiClient.get("/courses", { params: { instructorId, ...filters } });
+  return apiClient.get("/courses", { params: { instructorId, status: "all", ...filters } });
 }
 
 export function duplicateCourse(courseId) {
