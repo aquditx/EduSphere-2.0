@@ -36,7 +36,7 @@ export async function listEnrollments(req, res) {
 
     const result = await pool.query(
       `SELECT e.id, e.user_id, e.course_id, e.enrolled_at,
-              c.title, c.slug, c.thumbnail, c.accent, c.category, c.level, c.instructor_name
+              c.title, c.slug, c.thumbnail, c.accent, c.category, c.level
        FROM enrollments e
        JOIN courses c ON c.id = e.course_id
        WHERE e.user_id = $1

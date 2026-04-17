@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "seed:safe": "node seed.js --skip-courses"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

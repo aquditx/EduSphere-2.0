@@ -36,6 +36,7 @@ const commonDbConfig = {
 
 const authPool = new Pool({ ...commonDbConfig, database: 'auth_service' });
 const coursesPool = new Pool({ ...commonDbConfig, database: process.env.DB_NAME || 'courses_service' });
+const teachersPool = new Pool({ ...commonDbConfig, database: 'teachers_service' });
 
 // Real, publicly hosted MP4s (Google's CC-licensed sample video bucket).
 // These work directly with <video src="...">, no YouTube iframe needed.
@@ -56,19 +57,72 @@ const DEFAULT_INSTRUCTOR_PASSWORD = 'instructor123';
 const DEFAULT_STUDENT_PASSWORD = 'pass123';
 
 const INSTRUCTORS = [
-  { name: 'Aisha Morgan',  email: 'aisha@edusphere.app',  role: 'instructor' },
-  { name: 'Noah Bennett',  email: 'noah@edusphere.app',   role: 'instructor' },
-  { name: 'Mina Patel',    email: 'mina@edusphere.app',   role: 'instructor' },
-  { name: 'Sarah Lin',     email: 'sarah@edusphere.app',  role: 'instructor' },
-  { name: 'Lucas Rivera',  email: 'lucas@edusphere.app',  role: 'instructor' },
-  { name: 'Harper Quinn',  email: 'harper@edusphere.app', role: 'instructor' },
-  { name: 'Marcus Webb',   email: 'marcus@edusphere.app', role: 'instructor' },
+  {
+    name: 'Aisha Morgan', email: 'aisha@edusphere.app', role: 'instructor',
+    headline: 'Head of Product Design at Halo',
+    bio: 'Aisha helps product teams turn messy discovery into crisp systems, clearer critiques, and portfolio-ready outcomes. She has led design organizations across SaaS, marketplaces, and education products.',
+    topics: ['Product Design', 'Design Systems', 'Research', 'Prototyping'],
+    website: 'https://edusphere.app/instructors/aisha',
+    twitter: 'https://twitter.com/aishamorgan',
+    linkedin: 'https://linkedin.com/in/aishamorgan',
+    youtube: 'https://youtube.com/@aishamorgan',
+  },
+  {
+    name: 'Noah Bennett', email: 'noah@edusphere.app', role: 'instructor',
+    headline: 'Frontend Architect at Elevate',
+    bio: 'Noah teaches engineers how to profile, debug, and scale modern frontend systems without sacrificing product velocity. His courses focus on practical performance wins and production-grade observability.',
+    topics: ['React', 'Frontend Architecture', 'Performance', 'JavaScript'],
+    website: 'https://edusphere.app/instructors/noah',
+    twitter: 'https://twitter.com/noahbennett',
+    linkedin: 'https://linkedin.com/in/noahbennett',
+    youtube: 'https://youtube.com/@noahbennett',
+  },
+  {
+    name: 'Mina Patel', email: 'mina@edusphere.app', role: 'instructor',
+    headline: 'Data science educator and analytics consultant',
+    bio: 'Mina helps analysts and operators build confidence with real-world data workflows, dashboards, and experimentation. She focuses on making technical concepts approachable without losing rigor.',
+    topics: ['Data Science', 'Analytics', 'Experimentation'],
+    website: 'https://edusphere.app/instructors/mina',
+    twitter: 'https://twitter.com/minapatel',
+    linkedin: 'https://linkedin.com/in/minapatel',
+    youtube: 'https://youtube.com/@minapatel',
+  },
+  {
+    name: 'Sarah Lin', email: 'sarah@edusphere.app', role: 'instructor',
+    headline: 'Growth marketing lead and startup advisor',
+    bio: 'Sarah helps founders and marketers turn messy growth ideas into repeatable acquisition and retention systems. She has advised more than 40 early-stage teams across SaaS, marketplaces, and consumer products.',
+    topics: ['Marketing', 'Startups', 'Branding', 'Sales'],
+    website: null, twitter: null, linkedin: null, youtube: null,
+  },
+  {
+    name: 'Lucas Rivera', email: 'lucas@edusphere.app', role: 'instructor',
+    headline: 'Visual designer and motion director',
+    bio: 'Lucas teaches visual craft for the screen — from typographic systems to motion vocabulary for product teams. His work has shipped across award-winning apps, brand systems, and short films.',
+    topics: ['Graphic Design', 'Motion', 'Typography', 'Color'],
+    website: null, twitter: null, linkedin: null, youtube: null,
+  },
+  {
+    name: 'Harper Quinn', email: 'harper@edusphere.app', role: 'instructor',
+    headline: 'Career coach and productivity systems writer',
+    bio: 'Harper helps knowledge workers design sustainable productivity systems and grow their careers on purpose. She writes a weekly newsletter on focus, habits, and deliberate career moves.',
+    topics: ['Productivity', 'Career', 'Habits', 'Focus'],
+    website: null, twitter: null, linkedin: null, youtube: null,
+  },
+  {
+    name: 'Marcus Webb', email: 'marcus@edusphere.app', role: 'instructor',
+    headline: 'Former CFO turned leadership educator',
+    bio: 'Marcus translates finance, negotiation, and leadership into practical skills for operators who never trained formally. He has coached leaders at Fortune 500 firms and Series A startups alike.',
+    topics: ['Finance', 'Leadership', 'Negotiation', 'Communication'],
+    website: null, twitter: null, linkedin: null, youtube: null,
+  },
 ];
 
 const TEST_STUDENT = {
   name: 'Gloria Rodriguez',
   email: 'gloria@edusphere.app',
   role: 'student',
+  headline: 'Product designer upskilling into AI product management',
+  bio: 'Full-stack learner passionate about design systems and AI product experiences.',
 };
 
 // Course slugs to auto-enroll the test student in.
@@ -122,6 +176,66 @@ async function seedUsers() {
   console.log(`  ✓ ${student.email} (user_id=${student.user_id}) [student]`);
 
   return emailToUserId;
+}
+
+async function seedProfiles(emailToUserId) {
+  console.log('» Seeding profiles in auth_service...');
+  const allUsers = [...INSTRUCTORS, TEST_STUDENT];
+  for (const user of allUsers) {
+    const userId = emailToUserId.get(user.email);
+    if (!userId) continue;
+
+    // Check if profile exists, upsert manually (no UNIQUE on user_id in original schema)
+    const existing = await authPool.query(
+      `SELECT profile_id FROM profile WHERE user_id = $1 LIMIT 1`,
+      [userId]
+    );
+
+    if (existing.rows.length > 0) {
+      await authPool.query(
+        `UPDATE profile SET bio = $1, profile_pic_url = $2, updated_at = CURRENT_TIMESTAMP WHERE user_id = $3`,
+        [user.bio || null, null, userId]
+      );
+    } else {
+      await authPool.query(
+        `INSERT INTO profile (user_id, bio, profile_pic_url) VALUES ($1, $2, $3)`,
+        [userId, user.bio || null, null]
+      );
+    }
+    console.log(`  ✓ profile for ${user.email}`);
+  }
+}
+
+async function seedTeachers(emailToUserId) {
+  console.log('» Seeding teachers in teachers_service...');
+  for (const instructor of INSTRUCTORS) {
+    const userId = emailToUserId.get(instructor.email);
+    if (!userId) continue;
+
+    // Upsert into teachers table (has UNIQUE on user_id)
+    await teachersPool.query(
+      `INSERT INTO teachers (user_id, topics, website, twitter, linkedin, youtube, approved)
+       VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+       ON CONFLICT (user_id)
+       DO UPDATE SET
+         topics = EXCLUDED.topics,
+         website = EXCLUDED.website,
+         twitter = EXCLUDED.twitter,
+         linkedin = EXCLUDED.linkedin,
+         youtube = EXCLUDED.youtube,
+         approved = TRUE,
+         updated_at = NOW()`,
+      [
+        userId,
+        instructor.topics || [],
+        instructor.website || null,
+        instructor.twitter || null,
+        instructor.linkedin || null,
+        instructor.youtube || null,
+      ]
+    );
+    console.log(`  ✓ teacher for ${instructor.email} (topics: ${(instructor.topics || []).join(', ')})`);
+  }
 }
 
 async function clearCoursesTables() {
@@ -264,22 +378,44 @@ async function enrollTestStudent(emailToUserId) {
 // ---------------------------------------------------------------------------
 
 async function main() {
+  const skipCourses = process.argv.includes('--skip-courses');
+  const onlyProfiles = process.argv.includes('--only-profiles');
+
   console.log('Seeding EDDDUSPHERE demo data...\n');
+  if (skipCourses || onlyProfiles) {
+    console.log('  (--skip-courses mode: profiles + teachers only, courses_service untouched)\n');
+  }
+
   try {
     const emailToUserId = await seedUsers();
-    await clearCoursesTables();
-    await insertCourses(emailToUserId);
-    await enrollTestStudent(emailToUserId);
+    await seedProfiles(emailToUserId);
+    await seedTeachers(emailToUserId);
+
+    if (!skipCourses && !onlyProfiles) {
+      await clearCoursesTables();
+      await insertCourses(emailToUserId);
+      await enrollTestStudent(emailToUserId);
+    }
 
     console.log('\nDone. Login credentials:');
     console.log('  student:    gloria@edusphere.app / pass123');
     console.log('  instructor: aisha@edusphere.app / instructor123  (and noah, mina, sarah, lucas, harper, marcus)');
+    console.log('\nSeeded:');
+    console.log('  - 8 user profiles in auth_service.profile');
+    console.log('  - 7 teacher rows in teachers_service.teachers (all approved)');
+    if (!skipCourses && !onlyProfiles) {
+      console.log('  - 50 courses + modules + lessons in courses_service');
+      console.log('  - 3 auto-enrollments for Gloria');
+    } else {
+      console.log('  - courses_service: SKIPPED (your existing courses are safe)');
+    }
   } catch (err) {
     console.error('\nSeed failed:', err);
     process.exitCode = 1;
   } finally {
     await authPool.end();
     await coursesPool.end();
+    await teachersPool.end();
   }
 }
 
