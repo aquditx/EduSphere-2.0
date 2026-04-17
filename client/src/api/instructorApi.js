@@ -1,66 +1,11 @@
 import { apiClient } from "./client.js";
 
-// --- Dashboards ---
-// The dashboard endpoint returns aggregated stats/topCourses/recentEnrollments/
-// recentReviews in one call. Analytics, revenue, and notifications are derived
-// from this shape on the client to avoid proliferating backend endpoints.
-
-export function getInstructorDashboard() {
-  return apiClient.get("/courses/dashboard/instructor");
+export function getInstructorDashboard(instructorId) {
+  return apiClient.get("/dashboard/instructor", { params: { userId: instructorId } });
 }
-
-export async function getInstructorAnalytics() {
-  const dashboard = await apiClient.get("/courses/dashboard/instructor");
-  // Shape expected by the InstructorAnalyticsPage — derived from the dashboard.
-  return {
-    stats: dashboard.stats,
-    topCourses: dashboard.topCourses,
-    recentEnrollments: dashboard.recentEnrollments,
-  };
-}
-
-export async function getInstructorRevenue() {
-  const dashboard = await apiClient.get("/courses/dashboard/instructor");
-  // Revenue summary — extracted from the revenue stat for now. When you wire
-  // a real payments service, point this at that service instead.
-  const revenueStat = (dashboard.stats || []).find((s) => s.label === "Revenue");
-  return {
-    total: revenueStat?.value || "$0",
-    detail: revenueStat?.detail || "",
-    topCourses: dashboard.topCourses,
-  };
-}
-
-export async function getInstructorNotifications() {
-  const dashboard = await apiClient.get("/courses/dashboard/instructor");
-  // Notifications = recent enrollments + recent reviews collapsed into one feed.
-  const enrollments = (dashboard.recentEnrollments || []).map((row) => ({
-    id: `enroll-${row.id}`,
-    type: "enrollment",
-    title: "New enrollment",
-    message: `A learner enrolled in ${row.courseTitle}`,
-    createdAt: row.enrolledAt,
-    read: false,
-  }));
-  const reviews = (dashboard.recentReviews || []).map((row) => ({
-    id: `review-${row.id}`,
-    type: "review",
-    title: `${row.rating}★ review`,
-    message: row.comment || `New review on ${row.courseTitle}`,
-    createdAt: row.createdAt,
-    read: false,
-  }));
-  return [...enrollments, ...reviews].sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-  );
-}
-
-// --- Courses ---
 
 export function getInstructorCourses(instructorId, filters = {}) {
-  return apiClient.get("/courses", {
-    params: { instructorId, status: "all", ...filters },
-  });
+  return apiClient.get("/courses", { params: { instructorId, status: "all", ...filters } });
 }
 
 export function duplicateCourse(courseId) {
@@ -68,61 +13,49 @@ export function duplicateCourse(courseId) {
 }
 
 export function publishCourse(courseId) {
-  return apiClient.patch(`/courses/${courseId}`, { status: "approved" });
+  return apiClient.post(`/courses/${courseId}/publish`);
 }
 
 export function archiveCourse(courseId) {
-  return apiClient.patch(`/courses/${courseId}`, { status: "rejected" });
+  return apiClient.post(`/courses/${courseId}/archive`);
 }
 
 export function getCourseStudents(courseId) {
   return apiClient.get(`/courses/${courseId}/students`);
 }
 
-// --- No-ops (no backend equivalents yet) ---
-// These resolve locally so the UI buttons don't crash. Swap them for real
-// calls when the corresponding backend endpoints exist.
-
-export async function markNotificationRead(_notificationId) {
-  return { ok: true };
+export function getInstructorAnalytics(instructorId, params = {}) {
+  return apiClient.get("/dashboard/instructor/analytics", { params: { userId: instructorId, ...params } });
 }
 
-export async function replyToReview(_reviewId, _payload) {
-  return { ok: true };
+export function getInstructorRevenue(instructorId) {
+  return apiClient.get("/dashboard/instructor/revenue", { params: { userId: instructorId } });
 }
 
-export async function requestPayout(_instructorId, _payload) {
-  return { ok: true, status: "pending" };
+export function getInstructorNotifications(instructorId) {
+  return apiClient.get("/instructor/notifications", { params: { userId: instructorId } });
 }
 
-// --- Profile (auth_login users+profile join) ---
+export function markNotificationRead(notificationId) {
+  return apiClient.patch(`/notifications/${notificationId}/read`);
+}
+
+export function replyToReview(reviewId, payload) {
+  return apiClient.post(`/reviews/${reviewId}/reply`, payload);
+}
 
 export function getInstructorProfile(instructorId) {
-  return apiClient.get(`/auth/users/${instructorId}/profile`);
+  return apiClient.get(`/instructors/${instructorId}`);
 }
 
 export function updateInstructorProfile(instructorId, payload) {
-  return apiClient.patch(`/auth/users/${instructorId}/profile`, payload);
+  return apiClient.patch(`/instructors/${instructorId}`, payload);
 }
 
-// --- Public instructor profile (composed from 2 services) ---
-// Returns { profile, courses } — profile from auth_login, courses from courses-service.
+export function requestPayout(instructorId, payload) {
+  return apiClient.post(`/instructor/${instructorId}/payout`, payload);
+}
 
-export async function getInstructorPublicProfile(instructorId) {
-  const [profile, coursesResponse] = await Promise.all([
-    apiClient.get(`/auth/users/${instructorId}/profile`),
-    apiClient.get("/courses", { params: { instructorId, status: "approved", pageSize: 20 } }),
-  ]);
-  const courses = coursesResponse?.items || [];
-  const stats = {
-    courseCount: courses.length,
-    totalStudents: courses.reduce((sum, c) => sum + (c.enrollmentCount || 0), 0),
-    averageRating:
-      courses.length > 0
-        ? (
-            courses.reduce((sum, c) => sum + (c.ratingAverage || 0), 0) / courses.length
-          ).toFixed(1)
-        : "0.0",
-  };
-  return { profile, courses, stats };
+export function getInstructorPublicProfile(instructorId) {
+  return apiClient.get(`/instructors/${instructorId}/public`);
 }

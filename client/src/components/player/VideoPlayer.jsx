@@ -1,11 +1,37 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import PlayerControls from "@/components/player/Controls.jsx";
+
+function getYouTubeId(url) {
+  if (!url) return null;
+  // youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
+  const match = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/
+  );
+  return match ? match[1] : null;
+}
+
+function YouTubeEmbed({ videoId }) {
+  return (
+    <div className="aspect-video w-full bg-slate-950">
+      <iframe
+        className="h-full w-full"
+        src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+        title="YouTube video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        frameBorder="0"
+      />
+    </div>
+  );
+}
 
 export default function VideoPlayer({ lesson, playbackRate, captionsEnabled, onPlaybackRateChange, onCaptionsToggle, onTimeUpdate }) {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(lesson.durationSeconds || 0);
+
+  const youTubeId = useMemo(() => getYouTubeId(lesson.videoUrl), [lesson.videoUrl]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -24,9 +50,9 @@ export default function VideoPlayer({ lesson, playbackRate, captionsEnabled, onP
 
   useEffect(() => {
     setCurrentTime(0);
-    setDuration(0);
+    setDuration(lesson.durationSeconds || 0);
     setIsPlaying(false);
-  }, [lesson.id]);
+  }, [lesson.id, lesson.durationSeconds]);
 
   const poster = useMemo(() => lesson.thumbnail || null, [lesson.thumbnail]);
 
@@ -55,6 +81,20 @@ export default function VideoPlayer({ lesson, playbackRate, captionsEnabled, onP
     setCurrentTime(nextTime);
   }
 
+  // YouTube — render an iframe instead of the native player. Controls are
+  // YouTube's own (no seek bar, no playback speed from our side).
+  if (youTubeId) {
+    return (
+      <div className="surface overflow-hidden">
+        <YouTubeEmbed videoId={youTubeId} />
+        <div className="border-t border-slate-200 px-5 py-3 text-sm text-slate-500">
+          YouTube video — use the player's built-in controls. Duration: {Math.floor((lesson.durationSeconds || 0) / 60)}m {(lesson.durationSeconds || 0) % 60}s
+        </div>
+      </div>
+    );
+  }
+
+  // Direct MP4 / any other URL — native <video> with our custom controls.
   return (
     <div className="surface overflow-hidden">
       <video
@@ -64,7 +104,12 @@ export default function VideoPlayer({ lesson, playbackRate, captionsEnabled, onP
         poster={poster}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        onLoadedMetadata={(event) => setDuration(event.currentTarget.duration || lesson.durationSeconds)}
+        onLoadedMetadata={(event) => {
+          const realDuration = event.currentTarget.duration;
+          if (realDuration && Number.isFinite(realDuration)) {
+            setDuration(realDuration);
+          }
+        }}
         onTimeUpdate={handleTimeUpdate}
         controls={false}
       >
@@ -84,4 +129,3 @@ export default function VideoPlayer({ lesson, playbackRate, captionsEnabled, onP
     </div>
   );
 }
-

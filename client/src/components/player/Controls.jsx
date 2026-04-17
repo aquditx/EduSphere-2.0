@@ -2,6 +2,13 @@
 import Select from "@/components/ui/Select.jsx";
 import Button from "@/components/ui/Button.jsx";
 
+function formatTime(seconds) {
+  const s = Math.round(Math.max(0, seconds || 0));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, "0")}`;
+}
+
 export default function PlayerControls({
   isPlaying,
   onTogglePlay,
@@ -40,7 +47,7 @@ export default function PlayerControls({
         </div>
         <div className="flex items-center gap-3">
           <div className="text-sm text-slate-500">
-            {Math.round(currentTime)}s / {Math.round(duration || 0)}s
+            {formatTime(currentTime)} / {formatTime(duration)}
           </div>
           <div className="w-36">
             <Select aria-label="Playback speed" value={playbackRate} onChange={(event) => onPlaybackRateChange(Number(event.target.value))}>

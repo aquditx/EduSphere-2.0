@@ -47,7 +47,9 @@ export default function CoursePlayerPage() {
   const lesson = useMemo(() => course?.lessons.find((item) => item.id === lessonId) || course?.lessons[0], [course, lessonId]);
   const lessonIndex = course?.lessons.findIndex((item) => item.id === lesson?.id) ?? -1;
   const nextLesson = lessonIndex >= 0 ? course?.lessons[lessonIndex + 1] : null;
-  const progressPercent = course && progress ? Math.round((progress?.completedLessonIds?.length ||0 / course.totalLessons) * 100) : 0;
+  const progressPercent = course && progress
+    ? Math.round(((progress?.completedLessonIds?.length || 0) / (course.totalLessons || 1)) * 100)
+    : 0;
 
   async function handleMarkComplete() {
     if (!lesson || !isEnrolled) {

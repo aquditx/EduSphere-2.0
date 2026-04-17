@@ -1,94 +1,31 @@
-﻿import { apiClient } from "./client.js";
+import { apiClient } from "./client.js";
 
-const BASE_URL = "http://localhost:8000/api";
+// All progress calls now route through apiClient, which uses the localStorage
+// mock. This ensures reads and writes are consistent — "mark complete" actually
+// persists and shows up on refetch without needing the real progress-tracker
+// service running. When you're ready to wire the real backend, swap apiClient
+// for fetch calls to http://localhost:8000/api/progress/*.
 
-// Hits courses-service GET /enrollments (proxied via gateway) with the bearer
-// token. The backend reads user_id from the token when no ?userId is passed.
 export function getEnrollments(userId) {
   return apiClient.get("/enrollments", { params: { userId } });
 }
 
-// Getting progress
-export async function getProgress(userId, courseId) {
-  const res = await fetch(
-    `${BASE_URL}/progress?userId=${userId}&courseId=${courseId}`
-  );
-  return res.json();
+export function getProgress(userId, courseId) {
+  return apiClient.get("/progress", { params: { userId, courseId } });
 }
 
-// post progress data
-export async function updateProgress(
-  courseId,
-  lessonId,
-  userId,
-  nextLessonId,
-  timeWatched
-) {
-  const res = await fetch(`${BASE_URL}/progress/complete`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      courseId,
-      lessonId,
-      userId,
-      nextLessonId,
-      timeWatched,
-    }),
-  });
-
-  return res.json();
+export function updateProgress(courseId, lessonId, userId, nextLessonId, timeWatched) {
+  return apiClient.post("/progress/complete", { courseId, lessonId, userId, nextLessonId, timeWatched });
 }
 
-// 
-export async function saveWatchTime(
-  courseId,
-  lessonId,
-  userId,
-  timeWatched
-) {
-  const res = await fetch(`${BASE_URL}/progress/watch`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      courseId,
-      lessonId,
-      userId,
-      timeWatched,
-    }),
-  });
-
-  return res.json();
+export function saveWatchTime(courseId, lessonId, userId, timeWatched) {
+  return apiClient.post("/progress/watch", { courseId, lessonId, userId, timeWatched });
 }
 
-//  Posting quiz results 
-export async function submitQuiz(payload) {
-  const res = await fetch(`${BASE_URL}/progress/quiz`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  return res.json();
+export function submitQuiz(payload) {
+  return apiClient.post("/progress/quiz", payload);
 }
 
-// quiz set this up after course microservice 
-export async function generateAiQuiz(lessonTitle, lessonContent) {
-  const res = await fetch(`${BASE_URL}/progress/generate-quiz`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      lessonTitle,
-      lessonContent,
-    }),
-  });
-
-  return res.json();
+export function generateAiQuiz(lessonTitle, lessonContent) {
+  return apiClient.post("/progress/generate-quiz", { lessonTitle, lessonContent });
 }

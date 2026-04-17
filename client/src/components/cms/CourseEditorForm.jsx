@@ -117,10 +117,11 @@ export default function CourseEditorForm({
               <Textarea value={values.description} onChange={(event) => onChange("description", event.target.value)} className="mt-2" required />
             </div>
             <Select label="Category" value={values.category} onChange={(event) => onChange("category", event.target.value)}>
-              <option>Design</option>
-              <option>Development</option>
-              <option>AI</option>
+              <option>Tech</option>
               <option>Business</option>
+              <option>Design</option>
+              <option>Personal Development</option>
+              <option>Misc</option>
             </Select>
             <Select label="Level" value={values.level} onChange={(event) => onChange("level", event.target.value)}>
               <option>Beginner</option>
@@ -216,6 +217,9 @@ export default function CourseEditorForm({
               </div>
             ))}
           </div>
+          <Button type="button" variant="secondary" className="mt-4 w-full" onClick={onAddModule}>
+            + Add module
+          </Button>
         </section>
       );
     }
